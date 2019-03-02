@@ -1,0 +1,51 @@
+language: node_js
+node_js:
+  - "10"
+
+os:
+  - linux
+  - osx
+
+cache:
+  directories:
+    - node_modules
+
+addons:
+  apt:
+    sources:
+      # Use deadsnakes for an up to date Python 2
+      - sourceline: 'ppa:fkrull/deadsnakes-python2.7'
+    packages:
+      - python2.7
+      - python-pip
+
+before_install:
+  - |
+    if [[ $TRAVIS_OS_NAME == 'linux' ]]; then
+      python --version
+      pip install pip --upgrade --user
+      # Install ipykernel & matplotlib for testing of JupyterContext
+      pip install ipykernel matplotlib --user
+      # Check that ipykernel will run
+      python -m ipykernel_launcher &
+    fi
+
+script:
+  - npm run lint
+  - npm run check
+  - npm run cover
+  - npm run docs
+
+after_success:
+  # Upload test coverage to codecov.io
+  - bash <(curl -s https://codecov.io/bash)
+
+deploy:
+  # Deploy documentation to Github Pages
+  # See https://docs.travis-ci.com/user/deployment/pages/
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN
+  local-dir: docs
+  on:
+    branch: master
