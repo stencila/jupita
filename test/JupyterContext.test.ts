@@ -1,13 +1,13 @@
-const test = require('tape')
-const JupyterContext = require('../lib/JupyterContext')
+import JupyterContext from '../src/JupyterContext'
 
-test('JupyterContext', async assert => {
+jest.setTimeout(60000)
+
+test('JupyterContext', async () => {
   await JupyterContext.discover()
 
   // These tests can only be run if at least one Jupyter kernel is installed
-  assert.pass('JupyterContext.spec.kernels: ' + JSON.stringify(Object.keys(JupyterContext.spec.kernels)))
-  if (Object.keys(JupyterContext.spec.kernels).length < 1) {
-    assert.end()
+  console.log('JupyterContext.spec.kernels: ' + JSON.stringify(Object.keys(JupyterContext.kernels)))
+  if (Object.keys(JupyterContext.kernels).length < 1) {
     return
   }
 
@@ -17,13 +17,13 @@ test('JupyterContext', async assert => {
     timeout: 5
   })
 
-  assert.pass('JupyterContext.kernel: ' + context.kernel)
+  console.log('JupyterContext.kernel: ' + context['kernel'])
 
   await context.initialize()
-  assert.pass('JupyterContext._config: ' + JSON.stringify(context._config))
-  assert.pass('JupyterContext._kernelInfo: ' + JSON.stringify(context._kernelInfo))
-  assert.ok(context._connectionFile)
-  assert.ok(context._process)
+  console.log('JupyterContext._config: ' + JSON.stringify(context['config']))
+  console.log('JupyterContext._kernelInfo: ' + JSON.stringify(context['kernelInfo']))
+  expect(context['connectionFile']).toBeTruthy()
+  expect(context['process']).toBeTruthy()
 
   let cell
 
@@ -35,7 +35,8 @@ test('JupyterContext', async assert => {
       data: '2 * 2 - 1'
     }
   })
-  assert.deepEqual(cell.outputs[0], {
+  expect(cell.messages).toEqual([])
+  expect(cell.outputs[0]).toEqual({
     value: { type: 'number', data: 3 }
   })
 
@@ -46,21 +47,22 @@ test('JupyterContext', async assert => {
       type: 'string',
       data: '1 + foo'
     }
-  }).then(cell => {
-    assert.deepEqual(cell.messages, [
-      { type: 'error', message: 'NameError: name \'foo\' is not defined' }
-    ])
   })
+  expect(cell.messages).toEqual([
+    { type: 'error', message: 'NameError: name \'foo\' is not defined' }
+  ])
 
   // Execute block returning a JSONable console result
   cell = await context.execute('print(22)\n6 * 7\n')
-  assert.deepEqual(cell.outputs[0], {
+  expect(cell.messages).toEqual([])
+  expect(cell.outputs[0]).toEqual({
     value: { type: 'number', data: 42 }
   })
 
   // Execute block returning a non-JSONable console result
   cell = await context.execute('import datetime\ndatetime.datetime(2018, 5, 23)\n')
-  assert.deepEqual(cell.outputs[0], {
+  expect(cell.messages).toEqual([])
+  expect(cell.outputs[0]).toEqual({
     value: { type: 'string', data: 'datetime.datetime(2018, 5, 23, 0, 0)' }
   })
 
@@ -83,10 +85,9 @@ plt.show()
 
   // Execute block with error
   cell = await context.execute('foo')
-  assert.deepEqual(cell.messages, [
+  expect(cell.messages).toEqual([
     { type: 'error', message: 'NameError: name \'foo\' is not defined' }
   ])
 
-  await context.finalize()
-  assert.end()
+  context.finalize()
 })

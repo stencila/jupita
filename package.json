@@ -2,18 +2,20 @@
   "name": "stencila-jupyterer",
   "version": "0.0.1",
   "description": "Stencila compiler for Jupyter",
-  "main": "lib/index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "lint": "standard \"lib/**/*.js\" \"bin/**/*.js\" \"test/**/*.js\"",
-    "check": "dependency-check ./package.json && dependency-check ./package.json --unused --no-dev --ignore-module request",
-    "test": "tape test | tap-spec",
-    "cover": "nyc --reporter=lcov --reporter=text npm test",
-    "docs": "esdoc",
-    "prepublishOnly": "npm run lint && npm run test && npm run check && npm run docs",
-    "clean": "rimraf .nyc_output docs"
+    "lint": "tslint --project tsconfig.json --fix --format stylish ./src/**/*.ts",
+    "check": "npm run build && dependency-check ./package.json && dependency-check ./package.json --unused --no-dev --ignore-module request",
+    "test": "jest --detectOpenHandles",
+    "cover": "jest --collectCoverage",
+    "build": "tsc",
+    "docs": "markdown-toc -i --maxdepth=4 README.md && typedoc --readme README.md --mode file --out ./docs ./src",
+    "prepublishOnly": "npm run lint && npm run test && npm run check && npm run build && npm run docs",
+    "clean": "rimraf coverage docs"
   },
   "repository": {
     "type": "git",
@@ -27,17 +29,19 @@
   },
   "homepage": "https://github.com/stencila/jupyterer#readme",
   "devDependencies": {
+    "@types/jest": "^24.0.9",
+    "@types/uuid": "^3.4.4",
     "dependency-check": "^3.3.0",
-    "esdoc": "^1.1.0",
-    "esdoc-node": "^1.0.4",
-    "esdoc-standard-plugin": "^1.0.0",
-    "node-mocks-http": "^1.7.3",
-    "nodemon": "^1.18.10",
-    "nyc": "^11.9.0",
+    "jest": "^24.1.0",
+    "markdown-toc": "^1.2.0",
     "rimraf": "^2.6.3",
-    "standard": "^11.0.1",
-    "tap-spec": "^4.1.2",
-    "tape": "^4.10.1"
+    "semantic-release-cli": "^4.1.0",
+    "ts-jest": "^24.0.0",
+    "ts-node-dev": "^1.0.0-pre.32",
+    "tslint": "^5.13.1",
+    "tslint-config-standard": "^8.0.1",
+    "typedoc": "^0.14.2",
+    "typescript": "^3.3.3333"
   },
   "dependencies": {
     "jmp": "^1.1.0",

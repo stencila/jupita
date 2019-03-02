@@ -7,6 +7,18 @@
 [![Dependency status](https://david-dm.org/stencila/jupyterer.svg)](https://david-dm.org/stencila/node)
 [![Chat](https://badges.gitter.im/stencila/stencila.svg)](https://gitter.im/stencila/stencila)
 
+<!-- Automatically generated TOC. Don't edit, `make docs` instead>
+
+<!-- toc -->
+
+- [Install](#install)
+- [Use](#use)
+- [Docs](#docs)
+- [Discuss](#discuss)
+- [Contribute](#contribute)
+
+<!-- tocstop -->
+
 ### Install
 
 ```bash

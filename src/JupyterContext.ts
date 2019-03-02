@@ -1,8 +1,13 @@
-const fs = require('fs')
-const jmp = require('jmp')
-const kernelspecs = require('kernelspecs')
-const spawnteract = require('spawnteract')
-const uuid = require('uuid')
+import fs from 'fs'
+// @ts-ignore
+import jmp from 'jmp'
+// @ts-ignore
+import kernelspecs from 'kernelspecs'
+// @ts-ignore
+import spawnteract from 'spawnteract'
+import uuid from 'uuid'
+
+type Dict = {[key: string]: any}
 
 /**
  * An execution context using Jupyter kernels
@@ -14,7 +19,7 @@ const uuid = require('uuid')
  * over [ZeroMQ](http://zeromq.org/) sockets.
  *
  * The `discover` static method should be called initially to find all Jupyter kernels
- * currently installed on the machine and update `JupyterContext.spec.kernels`:
+ * currently installed on the machine and update `JupyterContext.kernels`:
  *
  *     JupyterContext.discover()
  *
@@ -34,20 +39,46 @@ const uuid = require('uuid')
  * [`spawnteract`](https://github.com/nteract/spawnteract), and to Nicolas Riesco for (`jmp`)[https://github.com/n-riesco/jmp],
  * all of which made this implementation far easier!
  */
-class JupyterContext {
+export default class JupyterContext {
+
+  /**
+   * A list of kernels available on this machine
+   */
+  static kernels: any = {}
+
+  // Temporarily disable linting for incomplete docs
+  /* tslint:disable:completed-docs */
+
+  // Temporarily use any
+  private kernel: any
+  private debug: any
+  private timeout: any
+
+  private process: any
+  private connectionFile: any
+  private config: any
+  private spec: any
+  private sessionId: any
+  private requests: any
+  private shellSocket: any
+  private ioSocket: any
+  private kernelInfo: any
+
+  /* tslint:enable:completed-docs */
+
   /**
    * Discover Jupyter kernels on the current machine
    *
    * Looks for Jupyter kernels that have been installed on the system
-   * and puts that list in `JupyterContext.spec.kernels` so that
+   * and puts that list in `JupyterContext.kernels` so that
    * peers know the capabilities of this "meta-context".
    *
    * @return {Promise} A promise
    */
   static discover () {
     // Create a list of kernel names and aliases
-    return kernelspecs.findAll().then(kernelspecs => {
-      JupyterContext.spec.kernels = kernelspecs
+    return kernelspecs.findAll().then((kernelspecs: any) => {
+      JupyterContext.kernels = kernelspecs
     })
   }
 
@@ -56,10 +87,10 @@ class JupyterContext {
    *
    * @param  {Object} options Options for specifying which kernel to use
    */
-  constructor (options = {}) {
+  constructor (options: {[k: string]: any} = {}) {
     let kernel = options.kernel
     let kernelName = options.name
-    const kernels = JupyterContext.spec.kernels
+    const kernels = JupyterContext.kernels
     const kernelNames = Object.keys(kernels)
 
     if (!kernelNames.length) {
@@ -94,99 +125,103 @@ class JupyterContext {
    *
    * @return {Promise} A promise
    */
-  initialize () {
-    if (this._process) return Promise.resolve()
-    else {
+  async initialize () {
+    if (!this.process) {
       // Options to [child_process.spawn]{@link https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options}
       let options = {}
       // Pass `kernels` to `launch()` as an optimization to prevent another kernelspecs search of filesystem
-      return spawnteract.launch(this.kernel, options, JupyterContext.spec.kernels).then(kernel => {
-        this._process = kernel.spawn // The running process, from child_process.spawn(...)
-        this._connectionFile = kernel.connectionFile // Connection file path
-        this._config = kernel.config // Connection information from the file
-        this._spec = kernel.kernelSpec
+      const kernel = await spawnteract.launch(this.kernel, options, JupyterContext.kernels)
+      this.process = kernel.spawn // The running process, from child_process.spawn(...)
+      this.connectionFile = kernel.connectionFile // Connection file path
+      this.config = kernel.config // Connection information from the file
+      this.spec = kernel.kernelSpec
 
-        // Unique session id for requests
-        this._sessionId = uuid()
+      // Unique session id for requests
+      this.sessionId = uuid()
 
-        // Map of requests for handling response messages
-        this._requests = {}
+      // Map of requests for handling response messages
+      this.requests = {}
 
-        const origin = this._config.transport + '://' + this._config.ip
+      const origin = this.config.transport + '://' + this.config.ip
 
-        // Shell socket for execute, and other, request
-        this._shellSocket = new jmp.Socket('dealer', 'sha256', this._config.key)
-        this._shellSocket.connect(origin + ':' + this._config.shell_port)
-        this._shellSocket.on('message', this._response.bind(this))
+      // Shell socket for execute, and other, request
+      this.shellSocket = new jmp.Socket('dealer', 'sha256', this.config.key)
+      this.shellSocket.connect(origin + ':' + this.config.shell_port)
+      this.shellSocket.on('message', this._response.bind(this))
 
-        // IOPub socket for receiving updates
-        this._ioSocket = new jmp.Socket('sub', 'sha256', this._config.key)
-        this._ioSocket.connect(origin + ':' + this._config.iopub_port)
-        this._ioSocket.on('message', this._response.bind(this))
-        this._ioSocket.subscribe('') // Subscribe to all topics
+      // IOPub socket for receiving updates
+      this.ioSocket = new jmp.Socket('sub', 'sha256', this.config.key)
+      this.ioSocket.connect(origin + ':' + this.config.iopub_port)
+      this.ioSocket.on('message', this._response.bind(this))
+      this.ioSocket.subscribe('') // Subscribe to all topics
 
-        // Get kernel info mainly to confirm communication with kernel is
-        // working
-        return this._request('kernel_info_request', {}, ['kernel_info_reply']).then(({request, response}) => {
-          this._kernelInfo = response.content
-          // This wait seems to be necessary in order for messages to be received on
-          // `this._ioSocket`.
-          return new Promise((resolve, reject) => {
-            setTimeout(resolve, 1000)
-          })
-        })
-      })
+      // Get kernel info mainly to confirm communication with kernel is
+      // working
+      const response: any = await this._request('kernel_info_request', {}, ['kernel_info_reply'])
+      this.kernelInfo = response.content
+
+      // This wait seems to be necessary in order for messages to be received on
+      // `this._ioSocket`.
+      return new Promise(resolve => setTimeout(resolve, 1000))
     }
   }
 
   /**
    * Finalize the context
    *
-   * @return {Promise} A resolved promise
+   * @return A resolved promise
    */
   finalize () {
-    if (this._shellSocket) {
-      this._shellSocket.removeAllListeners('message')
-      this._shellSocket.close()
-      this._shellSocket = null
+    if (this.shellSocket) {
+      this.shellSocket.removeAllListeners('message')
+      this.shellSocket.close()
+      this.shellSocket = null
     }
-    if (this._ioSocket) {
-      this._ioSocket.removeAllListeners('message')
-      this._ioSocket.close()
-      this._ioSocket = null
+    if (this.ioSocket) {
+      this.ioSocket.removeAllListeners('message')
+      this.ioSocket.close()
+      this.ioSocket = null
     }
-    if (this._process) {
-      this._process.kill()
-      this._process = null
+    if (this.process) {
+      this.process.kill()
+      this.process = null
     }
-    if (this._connectionFile) {
-      fs.unlinkSync(this._connectionFile)
-      this._connectionFile = null
+    if (this.connectionFile) {
+      fs.unlinkSync(this.connectionFile)
+      this.connectionFile = null
     }
-    this._config = null
-    this._spec = null
-    return Promise.resolve()
+    this.config = null
+    this.spec = null
   }
 
-  async pack (value) {
+  /**
+   * Pack a value
+   *
+   * @param value Value to pack
+   */
+  pack (value: any) {
     let type
     if (value === null) type = 'null'
     else type = value.type || typeof value
     switch (type) {
       case 'image':
-        return {type, src: value.src}
+        return { type, src: value.src }
       default:
-        return {type, data: value}
+        return { type, data: value }
     }
   }
 
-  async compile (cell) {
+  /**
+   * Compile a cell
+   *
+   * @param cell Cell to compile
+   */
+  compile (cell: any): Dict {
     let source
     if (typeof cell === 'string' || cell instanceof String) {
       source = cell
-    } else if (typeof cell === 'function') {
-      source = cell.toString()
     } else {
+      // @ts-ignore
       source = cell.source.data
     }
 
@@ -212,9 +247,9 @@ class JupyterContext {
    *
    * @override
    */
-  async execute (cell) {
+  async execute (cell: Dict | string): Promise<Dict> {
     // Compile the cell so it has correct structure
-    cell = await this.compile(cell)
+    cell = this.compile(cell)
 
     // For expression cells, use `user_expressions`, not `code`
     // to ensure there are no side effects (?)
@@ -263,28 +298,27 @@ class JupyterContext {
       // This allows the queued execution of multiple execute_requests, even if they generate exceptions.
       'stop_on_error': false
     }
-    return this._request('execute_request', content).then(({request, response}) => {
+    try {
+      const response = await this._request('execute_request', content)
       const msgType = response.header.msg_type
       switch (msgType) {
         case 'execute_result':
         case 'display_data':
           // Success! Unbundle the execution result, insert it into cell
           // outputs and then return the cell
-          return this._unbundle(response.content.data).then(value => {
-            cell.outputs.push({value})
-            return cell
-          })
+          const value = this._unbundle(response.content.data)
+          cell.outputs.push({ value })
+          return cell
         case 'execute_reply':
-          // We get  `execute_reply` messages when there is no
+          // We get `execute_reply` messages when there is no
           // execution result (e.g. an assignment), or when evaluating
           // a user expression
           const result = response.content.user_expressions.value
           if (result) {
             if (result.status === 'ok') {
-              return this._unbundle(result.data).then(value => {
-                cell.outputs.push({value})
-                return cell
-              })
+              const value = this._unbundle(result.data)
+              cell.outputs.push({ value })
+              return cell
             } else if (result && result.status === 'error') {
               cell.messages.push({
                 type: 'error',
@@ -306,34 +340,35 @@ class JupyterContext {
           return cell
         default:
           if (this.debug) console.log(`Unhandled message type: ${msgType}`)
+          return cell
       }
-    }).catch(error => {
+    } catch (error) {
       // Some other error happened...
       cell.messages.push({
         type: 'error',
         message: error.message
       })
-      return cell
-    })
+    }
+    return cell
   }
 
   /**
-   * Send a request message to the kernal
+   * Send a request message to the kernel
    *
    * @private
-   * @param  {String} requestType  Type of request e.g. 'execute'
-   * @param  {Object} content      Content of message
-   * @param  {String} responseTypes Types of response message to resolve
-   * @returns {Promise} Promise resolving to the {request, response} messages
+   * @param  requestType  Type of request e.g. 'execute'
+   * @param  content      Content of message
+   * @param  responseTypes Types of response message to resolve
+   * @returns Promise resolving to the response messages
    */
-  _request (requestType, content, responseTypes = ['execute_result', 'display_data', 'execute_reply', 'error']) {
+  _request (requestType: string, content: Dict, responseTypes = ['execute_result', 'display_data', 'execute_reply', 'error']): Promise<any> {
     return new Promise((resolve, reject) => {
-      var request = new jmp.Message()
+      let request = new jmp.Message()
       request.idents = []
       request.header = {
         'msg_id': uuid(),
         'username': 'user',
-        'session': this._sessionId,
+        'session': this.sessionId,
         'msg_type': requestType,
         'version': '5.2'
       }
@@ -341,18 +376,18 @@ class JupyterContext {
       request.metadata = {}
       request.content = content
 
-      this._requests[request.header.msg_id] = {
+      this.requests[request.header.msg_id] = {
         request,
         responseTypes,
-        handler: (response) => resolve({request, response})
+        handler: (response: Dict) => resolve(response)
       }
-      this._shellSocket.send(request)
+      this.shellSocket.send(request)
 
       // If this request has not been handled before `timeout`
       // throw an error
       if (this.timeout >= 0) {
         setTimeout(() => {
-          if (this._requests[request.header.msg_id]) {
+          if (this.requests[request.header.msg_id]) {
             reject(new Error('Request timed out'))
           }
         }, this.timeout * 1000)
@@ -364,12 +399,12 @@ class JupyterContext {
    * Receive a response message from the kernel
    *
    * @private
-   * @param  {Message} response Response message
+   * @param  response Response message
    */
-  _response (response) {
+  _response (response: Dict) {
     const requestId = response.parent_header.msg_id
     const responseType = response.header.msg_type
-    const request = this._requests[requestId]
+    const request = this.requests[requestId]
     if (this.debug) {
       console.log('Response: ', requestId, responseType, response.content)
     }
@@ -377,7 +412,7 @@ class JupyterContext {
     // calls handler
     if (request && request.responseTypes.indexOf(responseType) > -1) {
       request.handler(response)
-      delete this._requests[requestId]
+      delete this.requests[requestId]
     }
   }
 
@@ -387,11 +422,11 @@ class JupyterContext {
    * e.g. `{'text/plain': 'Hello'}` to `{type: 'string', data: 'Hello'}`
    *
    * @private
-   * @param  {Object} bundle A JMP MIME bundle
-   * @return {Promise}       Promise resolving to a data node
+   * @param  bundle A JMP MIME bundle
+   * @return Promise resolving to a data node
    */
-  _unbundle (bundle) {
-    return Promise.resolve().then(() => {
+  _unbundle (bundle: Dict): Dict {
+    const value = (function () {
       const image = bundle['image/png']
       if (image) {
         return {
@@ -409,14 +444,7 @@ class JupyterContext {
           return text
         }
       }
-    }).then(value => {
-      return this.pack(value)
-    })
+    })()
+    return this.pack(value)
   }
 }
-
-JupyterContext.spec = {
-  kernels: {} // Populated by JupyterContext.setup
-}
-
-module.exports = JupyterContext
