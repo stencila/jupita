@@ -27,24 +27,24 @@
   },
   "homepage": "https://github.com/stencila/jupyterer#readme",
   "devDependencies": {
-    "dependency-check": "^3.1.0",
-    "esdoc": "^1.0.4",
-    "esdoc-node": "^1.0.3",
+    "dependency-check": "^3.3.0",
+    "esdoc": "^1.1.0",
+    "esdoc-node": "^1.0.4",
     "esdoc-standard-plugin": "^1.0.0",
-    "node-mocks-http": "^1.6.7",
-    "nodemon": "^1.17.2",
-    "nyc": "^11.6.0",
-    "rimraf": "^2.6.2",
+    "node-mocks-http": "^1.7.3",
+    "nodemon": "^1.18.10",
+    "nyc": "^11.9.0",
+    "rimraf": "^2.6.3",
     "standard": "^11.0.1",
-    "tap-spec": "^4.1.1",
-    "tape": "^4.9.0"
+    "tap-spec": "^4.1.2",
+    "tape": "^4.10.1"
   },
   "dependencies": {
-    "jmp": "^1.0.0",
+    "jmp": "^1.1.0",
     "kernelspecs": "^2.0.0",
-    "request": "^2.85.0",
+    "request": "^2.88.0",
     "spawnteract": "^4.0.0",
-    "uuid": "^3.2.1"
+    "uuid": "^3.3.2"
   },
   "esdoc": {
     "source": "./lib",
