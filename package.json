@@ -49,20 +49,5 @@
     "request": "^2.88.0",
     "spawnteract": "^4.0.0",
     "uuid": "^3.3.2"
-  },
-  "esdoc": {
-    "source": "./lib",
-    "destination": "./docs",
-    "plugins": [
-      {
-        "name": "esdoc-standard-plugin"
-      },
-      {
-        "name": "esdoc-node"
-      }
-    ]
-  },
-  "standard": {
-    "ignore": []
   }
 }
