@@ -1,47 +1,56 @@
 {
   "name": "@stencila/jupita",
   "version": "0.0.1",
-  "description": "Stencila compiler for Jupyter",
+  "description": "Jupyter interpreter for executable documents",
   "main": "dist/index.js",
+  "bin": "dist/index.js",
   "types": "dist/index.d.ts",
-  "directories": {
-    "test": "test"
-  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "lint": "tslint --project tsconfig.json --fix --format stylish ./src/**/*.ts",
+    "lint": "eslint 'src/*.ts' --fix",
+    "format": "npx prettier --write '**/*.{md,ts}'",
     "check": "npm run build && dependency-check ./package.json && dependency-check ./package.json --unused --no-dev --ignore-module request",
-    "test": "jest --detectOpenHandles",
-    "cover": "jest --collectCoverage",
-    "build": "tsc",
-    "docs": "markdown-toc -i --maxdepth=4 README.md && typedoc --readme README.md --mode file --out ./docs ./src",
-    "prepublishOnly": "npm run lint && npm run test && npm run check && npm run build && npm run docs",
-    "clean": "rimraf coverage docs"
+    "test": "jest --runInBand --forceExit",
+    "test:watch": "jest --watch",
+    "test:cover": "jest  --runInBand --forceExit --collectCoverage",
+    "serve": "ts-node src serve",
+    "register": "npm run build && node dist register",
+    "build": "tsc --project tsconfig.prod.json",
+    "docs": "typedoc --mode file src/*.ts",
+    "make": "npm run lint && npm run test && npm run build && npm run docs",
+    "prepack": "npm run make"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/stencila/jupita.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "Jupyter",
+    "Stencila",
+    "interpreter",
+    "executor"
+  ],
+  "author": "Stencila and contributors <hello@stenci.la>",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/stencila/jupita/issues"
   },
   "homepage": "https://github.com/stencila/jupita#readme",
   "devDependencies": {
-    "@types/jest": "^24.0.9",
-    "@types/uuid": "^3.4.4",
-    "dependency-check": "^3.3.0",
-    "jest": "^24.1.0",
-    "markdown-toc": "^1.2.0",
-    "rimraf": "^2.6.3",
-    "semantic-release-cli": "^4.1.0",
-    "ts-jest": "^24.0.0",
-    "ts-node-dev": "^1.0.0-pre.32",
-    "tslint": "^5.13.1",
-    "tslint-config-standard": "^8.0.1",
-    "typedoc": "^0.14.2",
-    "typescript": "^3.3.3333"
+    "@stencila/dev-config": "1.4.23",
+    "@types/jest": "25.1.4",
+    "@types/uuid": "3.4.4",
+    "dependency-check": "4.1.0",
+    "jest": "25.1.0",
+    "ts-jest": "25.2.1",
+    "ts-node": "8.8.1",
+    "typedoc": "0.17.3",
+    "typescript": "3.8.3"
   },
   "dependencies": {
     "jmp": "^1.1.0",
@@ -49,5 +58,47 @@
     "request": "^2.88.0",
     "spawnteract": "^4.0.0",
     "uuid": "^3.3.2"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/src/*.test.ts"
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ],
+    "rules": {
+      "scope-case": [
+        2,
+        "always",
+        "sentence-case"
+      ],
+      "subject-case": [
+        2,
+        "always",
+        "sentence-case"
+      ]
+    }
+  },
+  "eslintConfig": {
+    "extends": "@stencila/eslint-config"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "prettier": "@stencila/dev-config/prettier-config.json",
+  "renovate": {
+    "extends": [
+      "@stencila"
+    ]
+  },
+  "release": {
+    "extends": "@stencila/semantic-release-config"
   }
 }

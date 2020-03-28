@@ -1,27 +1,26 @@
-all: setup lint check cover docs
+all: lint format check cover build docs
 
 setup:
 	npm install --python=python2.7
 
-run:
-	npm start
-
 lint:
 	npm run lint
+
+format:
+	npm run format
 
 check:
 	npm run check
 
 test:
 	npm test
-.PHONY: test
 
 cover:
-	npm run cover
+	npm run test:cover
+
+build:
+	npm run build
 
 docs:
 	npm run docs
 .PHONY: docs
-
-clean:
-	npm run clean

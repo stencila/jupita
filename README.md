@@ -7,19 +7,8 @@
 [![Dependency status](https://david-dm.org/stencila/jupita.svg)](https://david-dm.org/stencila/node)
 [![Chat](https://badges.gitter.im/stencila/stencila.svg)](https://gitter.im/stencila/stencila)
 
-<!-- Automatically generated TOC. Don't edit, `make docs` instead>
 
-<!-- toc -->
-
-- [Install](#install)
-- [Use](#use)
-- [Docs](#docs)
-- [Discuss](#discuss)
-- [Contribute](#contribute)
-
-<!-- tocstop -->
-
-### Install
+## Install
 
 ```bash
 npm install @stencila/jupita --global --python=python2.7
@@ -27,17 +16,17 @@ npm install @stencila/jupita --global --python=python2.7
 
 This package relies on dependencies with native add-ons (`xeromq`). So you will need to have `node-gyp` installed (https://github.com/nodejs/node-gyp#readme). The `--python` flag is necessary because, on OSX and Windows, `node-gyp` is only compatible with Python 2.7.
 
-### Use
+## Use
 
 ```js
 require('@stencila/jupita').run()
 ```
 
-### Docs
+## Docs
 
 API documentation is available at https://stencila.github.io/jupita.
 
-### Discuss
+## Discuss
 
 We love feedback. Create a [new issue](https://github.com/stencila/jupita/issues/new), add to [existing issues](https://github.com/stencila/jupita/issues) or [chat](https://gitter.im/stencila/stencila) with members of the community.
 
