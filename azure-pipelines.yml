@@ -28,7 +28,7 @@ jobs:
         inputs:
           versionSpec: '3.7'
 
-      - script: pip install ipykernel matplotlib
+      - script: pip install ipykernel matplotlib --user
         displayName: 'Install Python packages used in tests'
 
       - script: npm run lint
