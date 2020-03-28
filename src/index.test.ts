@@ -1,4 +1,4 @@
-import JupyterContext from '../src/JupyterContext'
+import JupyterContext from '.'
 
 jest.setTimeout(60000)
 
@@ -6,24 +6,29 @@ test('JupyterContext', async () => {
   await JupyterContext.discover()
 
   // These tests can only be run if at least one Jupyter kernel is installed
-  console.log('JupyterContext.spec.kernels: ' + JSON.stringify(Object.keys(JupyterContext.kernels)))
+  console.log(
+    'JupyterContext.spec.kernels: ' +
+      JSON.stringify(Object.keys(JupyterContext.kernels))
+  )
   if (Object.keys(JupyterContext.kernels).length < 1) {
     return
   }
 
-  let context = new JupyterContext({
+  const context = new JupyterContext({
     language: 'python',
     debug: false,
-    timeout: 5
+    timeout: 5,
   })
 
-  console.log('JupyterContext.kernel: ' + context['kernel'])
+  console.log('JupyterContext.kernel: ' + context.kernel)
 
   await context.initialize()
-  console.log('JupyterContext._config: ' + JSON.stringify(context['config']))
-  console.log('JupyterContext._kernelInfo: ' + JSON.stringify(context['kernelInfo']))
-  expect(context['connectionFile']).toBeTruthy()
-  expect(context['process']).toBeTruthy()
+  console.log('JupyterContext._config: ' + JSON.stringify(context.config))
+  console.log(
+    'JupyterContext._kernelInfo: ' + JSON.stringify(context.kernelInfo)
+  )
+  expect(context.connectionFile).toBeTruthy()
+  expect(context.process).toBeTruthy()
 
   let cell
 
@@ -32,12 +37,12 @@ test('JupyterContext', async () => {
     expr: true,
     source: {
       type: 'string',
-      data: '2 * 2 - 1'
-    }
+      data: '2 * 2 - 1',
+    },
   })
   expect(cell.messages).toEqual([])
   expect(cell.outputs[0]).toEqual({
-    value: { type: 'number', data: 3 }
+    value: { type: 'number', data: 3 },
   })
 
   // Execute expression with runtime error
@@ -45,25 +50,27 @@ test('JupyterContext', async () => {
     expr: true,
     source: {
       type: 'string',
-      data: '1 + foo'
-    }
+      data: '1 + foo',
+    },
   })
   expect(cell.messages).toEqual([
-    { type: 'error', message: 'NameError: name \'foo\' is not defined' }
+    { type: 'error', message: "NameError: name 'foo' is not defined" },
   ])
 
   // Execute block returning a JSONable console result
   cell = await context.execute('print(22)\n6 * 7\n')
   expect(cell.messages).toEqual([])
   expect(cell.outputs[0]).toEqual({
-    value: { type: 'number', data: 42 }
+    value: { type: 'number', data: 42 },
   })
 
   // Execute block returning a non-JSONable console result
-  cell = await context.execute('import datetime\ndatetime.datetime(2018, 5, 23)\n')
+  cell = await context.execute(
+    'import datetime\ndatetime.datetime(2018, 5, 23)\n'
+  )
   expect(cell.messages).toEqual([])
   expect(cell.outputs[0]).toEqual({
-    value: { type: 'string', data: 'datetime.datetime(2018, 5, 23, 0, 0)' }
+    value: { type: 'string', data: 'datetime.datetime(2018, 5, 23, 0, 0)' },
   })
 
   // Execute block returning an image
@@ -86,7 +93,7 @@ plt.show()
   // Execute block with error
   cell = await context.execute('foo')
   expect(cell.messages).toEqual([
-    { type: 'error', message: 'NameError: name \'foo\' is not defined' }
+    { type: 'error', message: "NameError: name 'foo' is not defined" },
   ])
 
   context.finalize()

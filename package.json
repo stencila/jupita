@@ -11,7 +11,6 @@
   "scripts": {
     "lint": "eslint 'src/*.ts' --fix",
     "format": "npx prettier --write '**/*.{md,ts}'",
-    "check": "npm run build && dependency-check ./package.json && dependency-check ./package.json --unused --no-dev --ignore-module request",
     "test": "jest --runInBand --forceExit",
     "test:watch": "jest --watch",
     "test:cover": "jest  --runInBand --forceExit --collectCoverage",
@@ -44,20 +43,16 @@
   "devDependencies": {
     "@stencila/dev-config": "1.4.23",
     "@types/jest": "25.1.4",
-    "@types/uuid": "3.4.4",
-    "dependency-check": "4.1.0",
-    "jest": "25.1.0",
+    "jest": "^25.2.3",
     "ts-jest": "25.2.1",
     "ts-node": "8.8.1",
     "typedoc": "0.17.3",
     "typescript": "3.8.3"
   },
   "dependencies": {
-    "jmp": "^1.1.0",
+    "jmp": "^2.0.0",
     "kernelspecs": "^2.0.0",
-    "request": "^2.88.0",
-    "spawnteract": "^4.0.0",
-    "uuid": "^3.3.2"
+    "spawnteract": "^5.0.1"
   },
   "jest": {
     "preset": "ts-jest",
@@ -84,7 +79,10 @@
     }
   },
   "eslintConfig": {
-    "extends": "@stencila/eslint-config"
+    "extends": "@stencila/eslint-config",
+    "env": {
+      "jest": true
+    }
   },
   "husky": {
     "hooks": {

@@ -7,7 +7,6 @@
 [![Dependency status](https://david-dm.org/stencila/jupita.svg)](https://david-dm.org/stencila/node)
 [![Chat](https://badges.gitter.im/stencila/stencila.svg)](https://gitter.im/stencila/stencila)
 
-
 ## Install
 
 ```bash
