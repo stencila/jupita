@@ -9,48 +9,23 @@ import spawnteract from 'spawnteract'
 
 type Dict = { [key: string]: any }
 
-/* eslint-disable @typescript-eslint/strict-boolean-expressions, @typescript-eslint/camelcase, @typescript-eslint/restrict-plus-operands */
+// Disable camel case check because used quite a bit in JMP API
+/* eslint-disable @typescript-eslint/camelcase */
 
-/**
- * An execution context using Jupyter kernels
- *
- * This class of execution context acts as a bridge between Stencila and
- * Jupyter kernels. It exposes methods of the Stencila `Context` API e.g. `executeEval`
- * which delegate execution to a Jupyter kernel. This is done via the
- * [Jupyter Messageing Protocol (JMP)](http://jupyter-client.readthedocs.io/en/stable/messaging.html)
- * over [ZeroMQ](http://zeromq.org/) sockets.
- *
- * The `discover` static method should be called initially to find all Jupyter kernels
- * currently installed on the machine and update `JupyterContext.kernels`:
- *
- *     JupyterContext.discover()
- *
- * New Jupyter execution contexts can be constructed using the `language` option which will
- * search for a kernel with a matching lowercased `language` property:
- *
- *     new JupyterContext({language:'r'})
- *
- * Alternively, you can specify a kernel directly:
- *
- *     new JupyterContext({kernel:'ir'})
- *
- * See https://github.com/jupyter/jupyter/wiki/Jupyter-kernels for a list of available
- * Jupyter kernels.
- *
- * Many thanks to the nteract community for [`kernelspecs`](https://github.com/nteract/kernelspecs) and
- * [`spawnteract`](https://github.com/nteract/spawnteract), and to Nicolas Riesco for (`jmp`)[https://github.com/n-riesco/jmp],
- * all of which made this implementation far easier!
- */
-export default class JupyterContext {
+export class Jupita {
   /**
    * A list of kernels available on this machine
    */
   static kernels: any = {}
 
-  // Temporarily use any
   kernel: string
-  debug: any
-  timeout: any
+
+  debug = false
+
+  /**
+   * Timeout for responses from the kernel.
+   */
+  timeout = -1
 
   process: any
   connectionFile: any
@@ -69,71 +44,82 @@ export default class JupyterContext {
    * and puts that list in `JupyterContext.kernels` so that
    * peers know the capabilities of this "meta-context".
    *
-   * @return {Promise} A promise
+   * This method should be called initially to find all Jupyter kernels
+   * currently installed on the machine and update `JupyterContext.kernels`:
+   *
+   *     JupyterContext.discover()
    */
-  static discover() {
+  static discover(): Promise<void> {
     // Create a list of kernel names and aliases
     return kernelspecs.findAll().then((kernelspecs: any) => {
-      JupyterContext.kernels = kernelspecs
+      Jupita.kernels = kernelspecs
     })
   }
 
   /**
-   * Construct a Jupyter execution context
+   * Construct a Jupyter executor.
    *
-   * @param  {Object} options Options for specifying which kernel to use
+   * New Jupyter execution contexts can be constructed using the `language` option which will
+   * search for a kernel with a matching lowercased `language` property:
+   *
+   *     new JupyterContext({language:'r'})
+   *
+   * Alternively, you can specify a kernel directly:
+   *
+   *     new JupyterContext({kernel:'ir'})
+   *
+   * See https://github.com/jupyter/jupyter/wiki/Jupyter-kernels for a list of available
+   * Jupyter kernels.
+   *
+   * @param options Options e.g for specifying which kernel to use
    */
-  constructor(options: { [k: string]: any } = {}) {
-    let kernel = options.kernel
-    const kernelName = options.name
-    const kernels = JupyterContext.kernels
+  constructor(options: Record<string, any> = {}) {
+    let { kernel, name, debug, timeout } = options
+
+    const kernels = Jupita.kernels
     const kernelNames = Object.keys(kernels)
 
-    if (!kernelNames.length) {
+    if (kernelNames.length === 0) {
       throw new Error('No Jupyter kernels available on this machine')
     }
-    if (kernel && !kernels[kernel]) {
+    if (kernel !== undefined && kernels[kernel] === undefined) {
       throw new Error(
         `Jupyter kernel "${kernel}" not available on this machine`
       )
     }
-    if (kernelName) {
+    if (name !== undefined) {
       for (const spec of kernels) {
-        if (spec.name.toLowerCase() === kernelName) {
+        if (spec.name.toLowerCase() === name) {
           kernel = spec.name
           break
         }
       }
-      if (!kernel) {
-        throw new Error(
-          `No Jupyter kernel on this machine with name "${kernelName}"`
-        )
+      if (kernel === undefined) {
+        throw new Error(`No Jupyter kernel on this machine with name "${name}"`)
       }
     }
-    if (!kernel) {
+    if (kernel === undefined) {
       if (kernelNames.includes('python3')) kernel = 'python3'
       else kernel = kernelNames[0]
     }
     this.kernel = kernel
 
-    this.debug = options.debug || false
-    this.timeout = options.timeout || -1
+    if (debug !== undefined) this.debug = debug
+    if (timeout !== undefined) this.timeout = timeout
   }
 
   /**
-   * Initialize the context
-   *
-   * @return {Promise} A promise
+   * Initialize the context.
    */
-  async initialize() {
-    if (!this.process) {
+  async initialize(): Promise<void> {
+    if (this.process === undefined) {
       // Options to [child_process.spawn]{@link https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options}
       const options = {}
       // Pass `kernels` to `launch()` as an optimization to prevent another kernelspecs search of filesystem
       const kernel = await spawnteract.launch(
         this.kernel,
         options,
-        JupyterContext.kernels
+        Jupita.kernels
       )
       this.process = kernel.spawn // The running process, from child_process.spawn(...)
       this.connectionFile = kernel.connectionFile // Connection file path
@@ -146,22 +132,24 @@ export default class JupyterContext {
       // Map of requests for handling response messages
       this.requests = {}
 
-      const origin = this.config.transport + '://' + this.config.ip
+      const { transport, ip, key, shell_port, iopub_port } = this.config
+
+      const origin = `${transport}://${ip}`
 
       // Shell socket for execute, and other, request
-      this.shellSocket = new jmp.Socket('dealer', 'sha256', this.config.key)
-      this.shellSocket.connect(origin + ':' + this.config.shell_port)
-      this.shellSocket.on('message', this._response.bind(this))
+      this.shellSocket = new jmp.Socket('dealer', 'sha256', key)
+      this.shellSocket.connect(`${origin}:${shell_port}`)
+      this.shellSocket.on('message', this.response.bind(this))
 
       // IOPub socket for receiving updates
-      this.ioSocket = new jmp.Socket('sub', 'sha256', this.config.key)
-      this.ioSocket.connect(origin + ':' + this.config.iopub_port)
-      this.ioSocket.on('message', this._response.bind(this))
+      this.ioSocket = new jmp.Socket('sub', 'sha256', key)
+      this.ioSocket.connect(`${origin}:${iopub_port}`)
+      this.ioSocket.on('message', this.response.bind(this))
       this.ioSocket.subscribe('') // Subscribe to all topics
 
       // Get kernel info mainly to confirm communication with kernel is
       // working
-      const response: any = await this._request('kernel_info_request', {}, [
+      const response: any = await this.request('kernel_info_request', {}, [
         'kernel_info_reply',
       ])
       this.kernelInfo = response.content
@@ -173,48 +161,31 @@ export default class JupyterContext {
   }
 
   /**
-   * Finalize the context
+   * Finalize the executor.
    *
-   * @return A resolved promise
+   * Performs various cleanup actions.
    */
-  finalize() {
-    if (this.shellSocket) {
+  finalize(): void {
+    if (this.shellSocket !== undefined) {
       this.shellSocket.removeAllListeners('message')
       this.shellSocket.close()
       this.shellSocket = null
     }
-    if (this.ioSocket) {
+    if (this.ioSocket !== undefined) {
       this.ioSocket.removeAllListeners('message')
       this.ioSocket.close()
       this.ioSocket = null
     }
-    if (this.process) {
+    if (this.process !== undefined) {
       this.process.kill()
       this.process = null
     }
-    if (this.connectionFile) {
+    if (this.connectionFile !== undefined) {
       fs.unlinkSync(this.connectionFile)
       this.connectionFile = null
     }
     this.config = null
     this.spec = null
-  }
-
-  /**
-   * Pack a value
-   *
-   * @param value Value to pack
-   */
-  pack(value: any) {
-    let type
-    if (value === null) type = 'null'
-    else type = value.type || typeof value
-    switch (type) {
-      case 'image':
-        return { type, src: value.src }
-      default:
-        return { type, data: value }
-    }
   }
 
   /**
@@ -227,7 +198,6 @@ export default class JupyterContext {
     if (typeof cell === 'string' || cell instanceof String) {
       source = cell
     } else {
-      // @ts-ignore
       source = cell.source.data
     }
 
@@ -236,8 +206,8 @@ export default class JupyterContext {
         type: 'string',
         data: source,
       },
-      expr: cell.expr || false,
-      global: cell.global || false,
+      expr: cell.expr ?? false,
+      global: cell.global ?? false,
       options: {},
       inputs: [],
       outputs: [],
@@ -248,7 +218,7 @@ export default class JupyterContext {
   /**
    * Execute a cell
    *
-   * For cells with `expr: true` utilises `user_expressions` property of an `execute_request` to
+   * For cells with `expr: true` utilizes `user_expressions` property of an `execute_request` to
    * evaluate expression side-effect free.
    *
    * @override
@@ -261,7 +231,7 @@ export default class JupyterContext {
     // to ensure there are no side effects (?)
     let code
     let expressions
-    if (cell.expr) {
+    if (cell.expr === true) {
       code = ''
       expressions = {
         value: cell.source.data,
@@ -305,14 +275,14 @@ export default class JupyterContext {
       stop_on_error: false,
     }
     try {
-      const response = await this._request('execute_request', content)
+      const response = await this.request('execute_request', content)
       const msgType = response.header.msg_type
       switch (msgType) {
         case 'execute_result':
         case 'display_data': {
           // Success! Unbundle the execution result, insert it into cell
           // outputs and then return the cell
-          const value = this._unbundle(response.content.data)
+          const value = this.unbundle(response.content.data)
           cell.outputs.push({ value })
           return cell
         }
@@ -321,15 +291,16 @@ export default class JupyterContext {
           // execution result (e.g. an assignment), or when evaluating
           // a user expression
           const result = response.content.user_expressions.value
-          if (result) {
-            if (result.status === 'ok') {
-              const value = this._unbundle(result.data)
+          if (result !== undefined) {
+            const { status, data, ename, evalue } = result
+            if (status === 'ok') {
+              const value = this.unbundle(data)
               cell.outputs.push({ value })
               return cell
-            } else if (result && result.status === 'error') {
+            } else if (status === 'error') {
               cell.messages.push({
                 type: 'error',
-                message: result.ename + ': ' + result.evalue,
+                message: `${ename}: ${evalue}`,
               })
               return cell
             }
@@ -341,9 +312,10 @@ export default class JupyterContext {
         case 'error': {
           // Errrror :( Add an error message to the cell
           const error = response.content
+          const { ename, evalue } = error
           cell.messages.push({
             type: 'error',
-            message: error.ename + ': ' + error.evalue,
+            message: `${ename}: ${evalue}`,
           })
           return cell
         }
@@ -370,7 +342,7 @@ export default class JupyterContext {
    * @param  responseTypes Types of response message to resolve
    * @returns Promise resolving to the response messages
    */
-  _request(
+  private request(
     requestType: string,
     content: Dict,
     responseTypes = ['execute_result', 'display_data', 'execute_reply', 'error']
@@ -396,11 +368,10 @@ export default class JupyterContext {
       }
       this.shellSocket.send(request)
 
-      // If this request has not been handled before `timeout`
-      // throw an error
+      // If this request has not been handled before `timeout` throw an error
       if (this.timeout >= 0) {
         setTimeout(() => {
-          if (this.requests[request.header.msg_id]) {
+          if (this.requests[request.header.msg_id] !== undefined) {
             reject(new Error('Request timed out'))
           }
         }, this.timeout * 1000)
@@ -411,10 +382,9 @@ export default class JupyterContext {
   /**
    * Receive a response message from the kernel
    *
-   * @private
    * @param  response Response message
    */
-  _response(response: Dict) {
+  private response(response: Dict): void {
     const requestId = response.parent_header.msg_id
     const responseType = response.header.msg_type
     const request = this.requests[requestId]
@@ -423,7 +393,7 @@ export default class JupyterContext {
     }
     // First response matching the request, including response type
     // calls handler
-    if (request && request.responseTypes.indexOf(responseType) > -1) {
+    if (request?.responseTypes.indexOf(responseType) > -1) {
       request.handler(response)
       delete this.requests[requestId]
     }
@@ -434,22 +404,21 @@ export default class JupyterContext {
    * `display data` message) into a data node
    * e.g. `{'text/plain': 'Hello'}` to `{type: 'string', data: 'Hello'}`
    *
-   * @private
    * @param  bundle A JMP MIME bundle
    * @return Promise resolving to a data node
    */
-  _unbundle(bundle: Dict): Dict {
+  private unbundle(bundle: Dict): Dict {
     const value = (function () {
       const image = bundle['image/png']
-      if (image) {
+      if (image !== undefined) {
         return {
           type: 'image',
-          src: 'data:image/png;base64,' + image,
+          src: `data:image/png;base64,${image}`,
         }
       }
 
       const text = bundle['text/plain']
-      if (text) {
+      if (text !== undefined) {
         // Attempt to parse to JSON
         try {
           return JSON.parse(text)
@@ -458,7 +427,7 @@ export default class JupyterContext {
         }
       }
     })()
-    return this.pack(value)
+    return value
   }
 }
 

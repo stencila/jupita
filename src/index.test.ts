@@ -1,20 +1,20 @@
-import JupyterContext from '.'
+import { Jupita } from '.'
 
 jest.setTimeout(60000)
 
 test('JupyterContext', async () => {
-  await JupyterContext.discover()
+  await Jupita.discover()
 
   // These tests can only be run if at least one Jupyter kernel is installed
   console.log(
     'JupyterContext.spec.kernels: ' +
-      JSON.stringify(Object.keys(JupyterContext.kernels))
+      JSON.stringify(Object.keys(Jupita.kernels))
   )
-  if (Object.keys(JupyterContext.kernels).length < 1) {
+  if (Object.keys(Jupita.kernels).length < 1) {
     return
   }
 
-  const context = new JupyterContext({
+  const context = new Jupita({
     language: 'python',
     debug: false,
     timeout: 5,
@@ -42,7 +42,7 @@ test('JupyterContext', async () => {
   })
   expect(cell.messages).toEqual([])
   expect(cell.outputs[0]).toEqual({
-    value: { type: 'number', data: 3 },
+    value: 3,
   })
 
   // Execute expression with runtime error
@@ -61,7 +61,7 @@ test('JupyterContext', async () => {
   cell = await context.execute('print(22)\n6 * 7\n')
   expect(cell.messages).toEqual([])
   expect(cell.outputs[0]).toEqual({
-    value: { type: 'number', data: 42 },
+    value: 42,
   })
 
   // Execute block returning a non-JSONable console result
@@ -70,7 +70,7 @@ test('JupyterContext', async () => {
   )
   expect(cell.messages).toEqual([])
   expect(cell.outputs[0]).toEqual({
-    value: { type: 'string', data: 'datetime.datetime(2018, 5, 23, 0, 0)' },
+    value: 'datetime.datetime(2018, 5, 23, 0, 0)',
   })
 
   // Execute block returning an image
