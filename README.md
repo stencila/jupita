@@ -9,7 +9,7 @@
 
 ## Introduction
 
-Stencila [Executa](https://github.com/stencila/executor) defines an API executing nodes within an executable document that is based on JSON-RPC and able to used across multiple transports (e.g. `stdio`, `http`, `ws`). This package acts a bridge between that API and the Jupyter API, which uses it's own messaging protocol and `zeromq` as a transport. It allows users of Stencila's interfaces to delegate execution to Jupyter kernels, instead of, or in addition to, Stencila's own executors.
+Stencila [Executa](https://github.com/stencila/executor) defines an API executing nodes within an executable document that is based on JSON-RPC and able to used across multiple transports (e.g. `stdio`, `http`, `ws`). This package acts a bridge between that API and the Jupyter API, which uses it's own [Jupyter Messaging Protocol (JMP)](http://jupyter-client.readthedocs.io/en/stable/messaging.html) and [ZeroMQ](http://zeromq.org/) as a transport. It allows users of Stencila's interfaces to delegate execution to Jupyter kernels, instead of, or in addition to, Stencila's own executors.
 
 ## Install
 
@@ -33,6 +33,20 @@ API documentation is available at https://stencila.github.io/jupita.
 
 We love feedback. Create a [new issue](https://github.com/stencila/jupita/issues/new), add to [existing issues](https://github.com/stencila/jupita/issues) or [chat](https://gitter.im/stencila/stencila) with members of the community.
 
-### Contribute
+### Develop
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+Most development tasks can be run directly from `npm` or via `make` wrapper recipes.
+
+| Task                           | `npm`           | `make`       |
+| ------------------------------ | --------------- | ------------ |
+| Install and setup dependencies | `npm install`   | `make setup` |
+| Check code for lint            | `npm run lint`  | `make lint`  |
+| Run tests                      | `npm test`      | `make test`  |
+| Run tests with coverage        | `npm run cover` | `make cover` |
+| Build documentation            | `npm run docs`  | `make docs`  |
+
+### Acknowledgments
+
+Many thanks to the nteract community for [`kernelspecs`](https://github.com/nteract/kernelspecs) and
+[`spawnteract`](https://github.com/nteract/spawnteract), and to Nicolas Riesco for (`jmp`)[https://github.com/n-riesco/jmp],
+all of which made this implementation far easier!
