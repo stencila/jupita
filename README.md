@@ -2,12 +2,10 @@
 
 #### Jupyter executor for executable documents
 
-[![NPM](http://img.shields.io/npm/v/@stencila/jupita.svg?style=flat)](https://www.npmjs.com/package/@stencila/jupita)
-[![Build status](https://travis-ci.org/stencila/jupita.svg?branch=master)](https://travis-ci.org/stencila/jupita)
-[![Build status](https://ci.appveyor.com/api/projects/status/ipj7s8hm82809lj9/branch/master?svg=true)](https://ci.appveyor.com/project/nokome/jupita/)
+[![Build Status](https://dev.azure.com/stencila/stencila/_apis/build/status/stencila.jupita?branchName=master)](https://dev.azure.com/stencila/stencila/_build/latest?definitionId=6&branchName=master)
 [![Code coverage](https://codecov.io/gh/stencila/jupita/branch/master/graph/badge.svg)](https://codecov.io/gh/stencila/jupita)
-[![Dependency status](https://david-dm.org/stencila/jupita.svg)](https://david-dm.org/stencila/node)
-[![Chat](https://badges.gitter.im/stencila/stencila.svg)](https://gitter.im/stencila/stencila)
+[![NPM](http://img.shields.io/npm/v/@stencila/jupita.svg?style=flat)](https://www.npmjs.com/package/@stencila/jupita)
+[![Docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://stencila.github.io/jupita/)
 
 ## Introduction
 
