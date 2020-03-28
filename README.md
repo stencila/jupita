@@ -1,4 +1,6 @@
-# 🌉 Bridge between Stencila executors and Juypter kernals
+# 🌞 Jupita
+
+#### Jupyter executor for executable documents
 
 [![NPM](http://img.shields.io/npm/v/@stencila/jupita.svg?style=flat)](https://www.npmjs.com/package/@stencila/jupita)
 [![Build status](https://travis-ci.org/stencila/jupita.svg?branch=master)](https://travis-ci.org/stencila/jupita)
@@ -6,6 +8,10 @@
 [![Code coverage](https://codecov.io/gh/stencila/jupita/branch/master/graph/badge.svg)](https://codecov.io/gh/stencila/jupita)
 [![Dependency status](https://david-dm.org/stencila/jupita.svg)](https://david-dm.org/stencila/node)
 [![Chat](https://badges.gitter.im/stencila/stencila.svg)](https://gitter.im/stencila/stencila)
+
+## Introduction
+
+Stencila [Executa](https://github.com/stencila/executor) defines an API executing nodes within an executable document that is based on JSON-RPC and able to used across multiple transports (e.g. `stdio`, `http`, `ws`). This package acts a bridge between that API and the Jupyter API, which uses it's own messaging protocol and `zeromq` as a transport. It allows users of Stencila's interfaces to delegate execution to Jupyter kernels, instead of, or in addition to, Stencila's own executors.
 
 ## Install
 
