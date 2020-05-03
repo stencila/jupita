@@ -1,0 +1,194 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>@stencila/jupita</title>
+	<meta name="description" content="Documentation for @stencila/jupita">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="assets/js/search.json" data-base=".">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="index.html" class="title">@stencila/jupita</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+							<input type="checkbox" id="tsd-filter-only-exported" />
+							<label class="tsd-widget" for="tsd-filter-only-exported">Only exported</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="globals.html">Globals</a>
+				</li>
+			</ul>
+			<h1>@stencila/jupita</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<div class="tsd-panel tsd-typography">
+				<a href="#🌞-jupita" id="🌞-jupita" style="color: inherit; text-decoration: none;">
+					<h1>🌞 Jupita</h1>
+				</a>
+				<a href="#jupyter-executor-for-executable-documents" id="jupyter-executor-for-executable-documents" style="color: inherit; text-decoration: none;">
+					<h4>Jupyter executor for executable documents</h4>
+				</a>
+				<p><a href="https://dev.azure.com/stencila/stencila/_build/latest?definitionId=6&amp;branchName=master"><img src="https://dev.azure.com/stencila/stencila/_apis/build/status/stencila.jupita?branchName=master" alt="Build Status"></a>
+					<a href="https://codecov.io/gh/stencila/jupita"><img src="https://codecov.io/gh/stencila/jupita/branch/master/graph/badge.svg" alt="Code coverage"></a>
+					<a href="https://www.npmjs.com/package/@stencila/jupita"><img src="http://img.shields.io/npm/v/@stencila/jupita.svg?style=flat" alt="NPM"></a>
+				<a href="https://stencila.github.io/jupita/"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Docs"></a></p>
+				<a href="#introduction" id="introduction" style="color: inherit; text-decoration: none;">
+					<h2>Introduction</h2>
+				</a>
+				<p>Stencila <a href="https://github.com/stencila/executor">Executa</a> defines an API executing nodes within an executable document that is based on JSON-RPC and able to used across multiple transports (e.g. <code>stdio</code>, <code>http</code>, <code>ws</code>). This package acts a bridge between that API and the Jupyter API, which uses it&#39;s own <a href="http://jupyter-client.readthedocs.io/en/stable/messaging.html">Jupyter Messaging Protocol (JMP)</a> and <a href="http://zeromq.org/">ZeroMQ</a> as a transport. It allows users of Stencila&#39;s interfaces to delegate execution to Jupyter kernels, instead of, or in addition to, Stencila&#39;s own executors.</p>
+				<a href="#install" id="install" style="color: inherit; text-decoration: none;">
+					<h2>Install</h2>
+				</a>
+				<pre><code class="language-bash">npm install @stencila/jupita --global --python=python2.7</code></pre>
+				<p>This package relies on dependencies with native add-ons (<code>xeromq</code>). So you will need to have <code>node-gyp</code> installed (<a href="https://github.com/nodejs/node-gyp#readme">https://github.com/nodejs/node-gyp#readme</a>). The <code>--python</code> flag is necessary because, on OSX and Windows, <code>node-gyp</code> is only compatible with Python 2.7.</p>
+				<a href="#use" id="use" style="color: inherit; text-decoration: none;">
+					<h2>Use</h2>
+				</a>
+				<pre><code class="language-js"><span class="hljs-built_in">require</span>(<span class="hljs-string">'@stencila/jupita'</span>).run()</code></pre>
+				<a href="#docs" id="docs" style="color: inherit; text-decoration: none;">
+					<h2>Docs</h2>
+				</a>
+				<p>API documentation is available at <a href="https://stencila.github.io/jupita">https://stencila.github.io/jupita</a>.</p>
+				<a href="#discuss" id="discuss" style="color: inherit; text-decoration: none;">
+					<h2>Discuss</h2>
+				</a>
+				<p>We love feedback. Create a <a href="https://github.com/stencila/jupita/issues/new">new issue</a>, add to <a href="https://github.com/stencila/jupita/issues">existing issues</a> or <a href="https://gitter.im/stencila/stencila">chat</a> with members of the community.</p>
+				<a href="#develop" id="develop" style="color: inherit; text-decoration: none;">
+					<h3>Develop</h3>
+				</a>
+				<p>Most development tasks can be run directly from <code>npm</code> or via <code>make</code> wrapper recipes.</p>
+				<table>
+					<thead>
+						<tr>
+							<th>Task</th>
+							<th><code>npm</code></th>
+							<th><code>make</code></th>
+						</tr>
+					</thead>
+					<tbody><tr>
+							<td>Install and setup dependencies</td>
+							<td><code>npm install</code></td>
+							<td><code>make setup</code></td>
+						</tr>
+						<tr>
+							<td>Check code for lint</td>
+							<td><code>npm run lint</code></td>
+							<td><code>make lint</code></td>
+						</tr>
+						<tr>
+							<td>Run tests</td>
+							<td><code>npm test</code></td>
+							<td><code>make test</code></td>
+						</tr>
+						<tr>
+							<td>Run tests with coverage</td>
+							<td><code>npm run cover</code></td>
+							<td><code>make cover</code></td>
+						</tr>
+						<tr>
+							<td>Build documentation</td>
+							<td><code>npm run docs</code></td>
+							<td><code>make docs</code></td>
+						</tr>
+				</tbody></table>
+				<a href="#acknowledgments" id="acknowledgments" style="color: inherit; text-decoration: none;">
+					<h3>Acknowledgments</h3>
+				</a>
+				<p>Many thanks to the nteract community for <a href="https://github.com/nteract/kernelspecs"><code>kernelspecs</code></a> and
+					<a href="https://github.com/nteract/spawnteract"><code>spawnteract</code></a>, and to Nicolas Riesco for (<code>jmp</code>)[<a href="https://github.com/n-riesco/jmp%5D">https://github.com/n-riesco/jmp]</a>,
+				all of which made this implementation far easier!</p>
+			</div>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="globals.html"><em>Globals</em></a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+					<li class=" tsd-kind-class">
+						<a href="classes/jupita.html" class="tsd-kind-icon">Jupita</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#dict" class="tsd-kind-icon">Dict</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#uuid" class="tsd-kind-icon">uuid</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="assets/js/search.js"><' + '/script>');</script>
+</body>
+</html>
