@@ -74,29 +74,29 @@
 					<a href="https://codecov.io/gh/stencila/jupita"><img src="https://codecov.io/gh/stencila/jupita/branch/master/graph/badge.svg" alt="Code coverage"></a>
 					<a href="https://www.npmjs.com/package/@stencila/jupita"><img src="http://img.shields.io/npm/v/@stencila/jupita.svg?style=flat" alt="NPM"></a>
 				<a href="https://stencila.github.io/jupita/"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Docs"></a></p>
-				<a href="#introduction" id="introduction" style="color: inherit; text-decoration: none;">
-					<h2>Introduction</h2>
+				<a href="#👋-introduction" id="👋-introduction" style="color: inherit; text-decoration: none;">
+					<h2>👋 Introduction</h2>
 				</a>
 				<p>Stencila <a href="https://github.com/stencila/executor">Executa</a> defines an API executing nodes within an executable document that is based on JSON-RPC and able to used across multiple transports (e.g. <code>stdio</code>, <code>http</code>, <code>ws</code>). This package acts a bridge between that API and the Jupyter API, which uses it&#39;s own <a href="http://jupyter-client.readthedocs.io/en/stable/messaging.html">Jupyter Messaging Protocol (JMP)</a> and <a href="http://zeromq.org/">ZeroMQ</a> as a transport. It allows users of Stencila&#39;s interfaces to delegate execution to Jupyter kernels, instead of, or in addition to, Stencila&#39;s own executors.</p>
-				<a href="#install" id="install" style="color: inherit; text-decoration: none;">
-					<h2>Install</h2>
+				<a href="#📦-install" id="📦-install" style="color: inherit; text-decoration: none;">
+					<h2>📦 Install</h2>
 				</a>
 				<pre><code class="language-bash">npm install @stencila/jupita --global --python=python2.7</code></pre>
 				<p>This package relies on dependencies with native add-ons (<code>xeromq</code>). So you will need to have <code>node-gyp</code> installed (<a href="https://github.com/nodejs/node-gyp#readme">https://github.com/nodejs/node-gyp#readme</a>). The <code>--python</code> flag is necessary because, on OSX and Windows, <code>node-gyp</code> is only compatible with Python 2.7.</p>
-				<a href="#use" id="use" style="color: inherit; text-decoration: none;">
-					<h2>Use</h2>
+				<a href="#🚀-use" id="🚀-use" style="color: inherit; text-decoration: none;">
+					<h2>🚀 Use</h2>
 				</a>
 				<pre><code class="language-js"><span class="hljs-built_in">require</span>(<span class="hljs-string">'@stencila/jupita'</span>).run()</code></pre>
-				<a href="#docs" id="docs" style="color: inherit; text-decoration: none;">
-					<h2>Docs</h2>
+				<a href="#📖-docs" id="📖-docs" style="color: inherit; text-decoration: none;">
+					<h2>📖 Docs</h2>
 				</a>
 				<p>API documentation is available at <a href="https://stencila.github.io/jupita">https://stencila.github.io/jupita</a>.</p>
-				<a href="#discuss" id="discuss" style="color: inherit; text-decoration: none;">
-					<h2>Discuss</h2>
+				<a href="#💬-discuss" id="💬-discuss" style="color: inherit; text-decoration: none;">
+					<h2>💬 Discuss</h2>
 				</a>
 				<p>We love feedback. Create a <a href="https://github.com/stencila/jupita/issues/new">new issue</a>, add to <a href="https://github.com/stencila/jupita/issues">existing issues</a> or <a href="https://gitter.im/stencila/stencila">chat</a> with members of the community.</p>
-				<a href="#develop" id="develop" style="color: inherit; text-decoration: none;">
-					<h3>Develop</h3>
+				<a href="#🛠️-develop" id="🛠️-develop" style="color: inherit; text-decoration: none;">
+					<h2>🛠️ Develop</h2>
 				</a>
 				<p>Most development tasks can be run directly from <code>npm</code> or via <code>make</code> wrapper recipes.</p>
 				<table>
@@ -133,11 +133,11 @@
 							<td><code>make docs</code></td>
 						</tr>
 				</tbody></table>
-				<a href="#acknowledgments" id="acknowledgments" style="color: inherit; text-decoration: none;">
-					<h3>Acknowledgments</h3>
+				<a href="#🙏-acknowledgments" id="🙏-acknowledgments" style="color: inherit; text-decoration: none;">
+					<h2>🙏 Acknowledgments</h2>
 				</a>
 				<p>Many thanks to the nteract community for <a href="https://github.com/nteract/kernelspecs"><code>kernelspecs</code></a> and
-					<a href="https://github.com/nteract/spawnteract"><code>spawnteract</code></a>, and to Nicolas Riesco for (<code>jmp</code>)[<a href="https://github.com/n-riesco/jmp%5D">https://github.com/n-riesco/jmp]</a>,
+					<a href="https://github.com/nteract/spawnteract"><code>spawnteract</code></a>, and to Nicolas Riesco for <a href="https://github.com/n-riesco/jmp"><code>jmp</code></a>,
 				all of which made this implementation far easier!</p>
 			</div>
 		</div>
