@@ -50,7 +50,7 @@
     "typescript": "3.9.3"
   },
   "dependencies": {
-    "@stencila/executa": "^1.11.6",
+    "@stencila/executa": "^1.11.8",
     "jmp": "^2.0.0",
     "kernelspecs": "^2.0.0",
     "spawnteract": "^5.0.1"
