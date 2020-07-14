@@ -10,7 +10,7 @@ import spawnteract from 'spawnteract'
 type Dict = { [key: string]: any }
 
 // Disable camel case check because used quite a bit in JMP API
-/* eslint-disable @typescript-eslint/camelcase */
+/* eslint-disable camelcase */
 
 export class Jupita {
   /**
