@@ -1,3 +1,10 @@
+## [0.1.4](https://github.com/stencila/jupita/compare/v0.1.3...v0.1.4) (2020-08-05)
+
+
+### Bug Fixes
+
+* **dependencies:** update dependency @stencila/executa to ^1.12.0 ([6d57b73](https://github.com/stencila/jupita/commit/6d57b73eae94b94bd6ac30a1fdf3b22a87e8db2c))
+
 ## [0.1.3](https://github.com/stencila/jupita/compare/v0.1.2...v0.1.3) (2020-07-14)
 
 
