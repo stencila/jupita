@@ -1,6 +1,6 @@
 {
   "name": "@stencila/jupita",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Jupyter interpreter for executable documents",
   "main": "dist/index.js",
   "bin": "dist/index.js",
