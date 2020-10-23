@@ -51,6 +51,7 @@
   },
   "dependencies": {
     "@stencila/executa": "^1.15.0",
+    "@stencila/schema": "^0.46.5",
     "jmp": "^2.0.0",
     "kernelspecs": "^2.0.0",
     "spawnteract": "^5.0.1"
