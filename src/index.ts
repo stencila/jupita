@@ -1,3 +1,18 @@
+#!/usr/bin/env node
+
+import {
+  Capabilities,
+  CapabilityError,
+  cli,
+  JSONSchema7,
+  Listener,
+  logga,
+  Method,
+  schema,
+  Server,
+  StdioServer,
+  Claims,
+} from '@stencila/executa'
 import crypto from 'crypto'
 import fs from 'fs'
 // @ts-ignore
@@ -7,54 +22,40 @@ import kernelspecs from 'kernelspecs'
 // @ts-ignore
 import spawnteract from 'spawnteract'
 
-type Dict = { [key: string]: any }
-
-// Disable camel case check because used quite a bit in JMP API
+// Disable camel case check because camel casing is used quite a bit in JMP API
 /* eslint-disable camelcase */
 
-export class Jupita {
+const log = logga.getLogger('jupita')
+
+export class Jupita extends Listener {
   /**
-   * A list of kernels available on this machine
+   * A map of the specifications of Jupyter kernels available
+   * on this machine.
    */
-  static kernels: any = {}
+  kernels: any = {}
 
-  kernel: string
-
-  debug = false
+  /**
+   * The language for the current session.
+   */
+  language?: string
 
   /**
    * Timeout for responses from the kernel.
    */
   timeout = -1
 
+  /**
+   * A map of requests sent to the kernel
+   */
+  requests: Record<string, any> = {}
+
   process: any
   connectionFile: any
   config: any
   spec: any
-  sessionId: any
-  requests: any
   shellSocket: any
   ioSocket: any
   kernelInfo: any
-
-  /**
-   * Discover Jupyter kernels on the current machine
-   *
-   * Looks for Jupyter kernels that have been installed on the system
-   * and puts that list in `JupyterContext.kernels` so that
-   * peers know the capabilities of this "meta-context".
-   *
-   * This method should be called initially to find all Jupyter kernels
-   * currently installed on the machine and update `JupyterContext.kernels`:
-   *
-   *     JupyterContext.discover()
-   */
-  static discover(): Promise<void> {
-    // Create a list of kernel names and aliases
-    return kernelspecs.findAll().then((kernelspecs: any) => {
-      Jupita.kernels = kernelspecs
-    })
-  }
 
   /**
    * Construct a Jupyter executor.
@@ -64,7 +65,7 @@ export class Jupita {
    *
    *     new JupyterContext({language:'r'})
    *
-   * Alternively, you can specify a kernel directly:
+   * Alternatively, you can specify a kernel directly:
    *
    *     new JupyterContext({kernel:'ir'})
    *
@@ -73,172 +74,72 @@ export class Jupita {
    *
    * @param options Options e.g for specifying which kernel to use
    */
-  constructor(options: Record<string, any> = {}) {
-    let { kernel, name, debug, timeout } = options
-
-    const kernels = Jupita.kernels
-    const kernelNames = Object.keys(kernels)
-
-    if (kernelNames.length === 0) {
-      throw new Error('No Jupyter kernels available on this machine')
-    }
-    if (kernel !== undefined && kernels[kernel] === undefined) {
-      throw new Error(
-        `Jupyter kernel "${kernel}" not available on this machine`
-      )
-    }
-    if (name !== undefined) {
-      for (const spec of kernels) {
-        if (spec.name.toLowerCase() === name) {
-          kernel = spec.name
-          break
-        }
-      }
-      if (kernel === undefined) {
-        throw new Error(`No Jupyter kernel on this machine with name "${name}"`)
-      }
-    }
-    if (kernel === undefined) {
-      if (kernelNames.includes('python3')) kernel = 'python3'
-      else kernel = kernelNames[0]
-    }
-    this.kernel = kernel
-
-    if (debug !== undefined) this.debug = debug
-    if (timeout !== undefined) this.timeout = timeout
+  constructor(
+    servers: Server[] = [
+      new StdioServer({ command: 'node', args: [__filename, 'start'] }),
+    ]
+  ) {
+    super('ju', servers)
   }
 
   /**
-   * Initialize the context.
+   * @override Override of `Executor.capabilities` to
+   * define this interpreter's capabilities.
    */
-  async initialize(): Promise<void> {
-    if (this.process === undefined) {
-      // Options to [child_process.spawn]{@link https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options}
-      const options = {}
-      // Pass `kernels` to `launch()` as an optimization to prevent another kernelspecs search of filesystem
-      const kernel = await spawnteract.launch(
-        this.kernel,
-        options,
-        Jupita.kernels
-      )
-      this.process = kernel.spawn // The running process, from child_process.spawn(...)
-      this.connectionFile = kernel.connectionFile // Connection file path
-      this.config = kernel.config // Connection information from the file
-      this.spec = kernel.kernelSpec
-
-      // Unique session id for requests
-      this.sessionId = uuid()
-
-      // Map of requests for handling response messages
-      this.requests = {}
-
-      const { transport, ip, key, shell_port, iopub_port } = this.config
-
-      const origin = `${transport}://${ip}`
-
-      // Shell socket for execute, and other, request
-      this.shellSocket = new jmp.Socket('dealer', 'sha256', key)
-      this.shellSocket.connect(`${origin}:${shell_port}`)
-      this.shellSocket.on('message', this.response.bind(this))
-
-      // IOPub socket for receiving updates
-      this.ioSocket = new jmp.Socket('sub', 'sha256', key)
-      this.ioSocket.connect(`${origin}:${iopub_port}`)
-      this.ioSocket.on('message', this.response.bind(this))
-      this.ioSocket.subscribe('') // Subscribe to all topics
-
-      // Get kernel info mainly to confirm communication with kernel is
-      // working
-      const response: any = await this.request('kernel_info_request', {}, [
-        'kernel_info_reply',
-      ])
-      this.kernelInfo = response.content
-
-      // This wait seems to be necessary in order for messages to be received on
-      // `this._ioSocket`.
-      return new Promise((resolve) => setTimeout(resolve, 1000))
-    }
-  }
-
-  /**
-   * Finalize the executor.
-   *
-   * Performs various cleanup actions.
-   */
-  finalize(): void {
-    if (this.shellSocket !== undefined) {
-      this.shellSocket.removeAllListeners('message')
-      this.shellSocket.close()
-      this.shellSocket = null
-    }
-    if (this.ioSocket !== undefined) {
-      this.ioSocket.removeAllListeners('message')
-      this.ioSocket.close()
-      this.ioSocket = null
-    }
-    if (this.process !== undefined) {
-      this.process.kill()
-      this.process = null
-    }
-    if (this.connectionFile !== undefined) {
-      fs.unlinkSync(this.connectionFile)
-      this.connectionFile = null
-    }
-    this.config = null
-    this.spec = null
-  }
-
-  /**
-   * Compile a cell
-   *
-   * @param cell Cell to compile
-   */
-  compile(cell: any): Dict {
-    let source
-    if (typeof cell === 'string' || cell instanceof String) {
-      source = cell
-    } else {
-      source = cell.source.data
-    }
-
-    return {
-      source: {
-        type: 'string',
-        data: source,
+  public async capabilities(): Promise<Capabilities> {
+    const kernelSpecs = await this.findKernels()
+    const params: JSONSchema7 = {
+      required: ['node'],
+      properties: {
+        node: {
+          required: ['type', 'programmingLanguage', 'text'],
+          properties: {
+            type: {
+              enum: ['CodeChunk', 'CodeExpression'],
+            },
+            programmingLanguage: {
+              enum: Object.keys(kernelSpecs),
+            },
+            text: {
+              type: 'string',
+            },
+          },
+        },
       },
-      expr: cell.expr ?? false,
-      global: cell.global ?? false,
-      options: {},
-      inputs: [],
-      outputs: [],
-      messages: [],
     }
+    return Promise.resolve({
+      manifest: true,
+      execute: params,
+    })
   }
 
   /**
-   * Execute a cell
+   * @override Override of `Executor.execute` that executes code in a Jupyter kernel.
    *
-   * For cells with `expr: true` utilizes `user_expressions` property of an `execute_request` to
-   * evaluate expression side-effect free.
-   *
-   * @override
+   * For cells with `CodeExpression` nodes utilizes `user_expressions` property of
+   * an `execute_request` to evaluate expression side-effect free.
    */
-  async execute(cell: Dict | string): Promise<Dict> {
-    // Compile the cell so it has correct structure
-    cell = this.compile(cell)
-
-    // For expression cells, use `user_expressions`, not `code`
-    // to ensure there are no side effects (?)
+  public async execute<Type>(
+    node: Type,
+    session?: schema.SoftwareSession,
+    claims?: Claims,
+    job?: string
+  ): Promise<Type> {
+    let language
     let code
     let expressions
-    if (cell.expr === true) {
+    if (schema.isA('CodeExpression', node)) {
+      language = node.programmingLanguage
       code = ''
       expressions = {
-        value: cell.source.data,
+        value: node.text,
       }
-    } else {
-      code = cell.source.data
+    } else if (schema.isA('CodeChunk', node)) {
+      language = node.programmingLanguage
+      code = node.text
       expressions = {}
+    } else {
+      return node
     }
 
     const content = {
@@ -274,7 +175,20 @@ export class Jupita {
       // This allows the queued execution of multiple execute_requests, even if they generate exceptions.
       stop_on_error: false,
     }
+
+    const outputs = []
+    const errors = []
     try {
+      if (this.language !== undefined) {
+        if (language !== this.language) {
+          throw new Error(
+            `Language of node (${language}) does not match that of kernel (${this.language})`
+          )
+        }
+      } else {
+        await this.startKernel(language ?? 'python')
+      }
+
       const response = await this.request('execute_request', content)
       const msgType = response.header.msg_type
       switch (msgType) {
@@ -282,9 +196,8 @@ export class Jupita {
         case 'display_data': {
           // Success! Unbundle the execution result, insert it into cell
           // outputs and then return the cell
-          const value = this.unbundle(response.content.data)
-          cell.outputs.push({ value })
-          return cell
+          outputs.push(this.unbundle(response.content.data))
+          break
         }
         case 'execute_reply': {
           // We get `execute_reply` messages when there is no
@@ -294,18 +207,14 @@ export class Jupita {
           if (result !== undefined) {
             const { status, data, ename, evalue } = result
             if (status === 'ok') {
-              const value = this.unbundle(data)
-              cell.outputs.push({ value })
-              return cell
+              outputs.push(this.unbundle(data))
             } else if (status === 'error') {
-              cell.messages.push({
-                type: 'error',
-                message: `${ename}: ${evalue}`,
-              })
-              return cell
+              errors.push(
+                schema.codeError({
+                  errorMessage: `${ename}: ${evalue}`,
+                })
+              )
             }
-          } else {
-            return cell
           }
           break
         }
@@ -313,24 +222,132 @@ export class Jupita {
           // Errrror :( Add an error message to the cell
           const error = response.content
           const { ename, evalue } = error
-          cell.messages.push({
-            type: 'error',
-            message: `${ename}: ${evalue}`,
-          })
-          return cell
+          errors.push(
+            schema.codeError({
+              errorMessage: `${ename}: ${evalue}`,
+            })
+          )
+          break
         }
         default:
-          if (this.debug) console.log(`Unhandled message type: ${msgType}`)
-          return cell
+          log.debug(`Unhandled message type: ${msgType}`)
       }
     } catch (error) {
       // Some other error happened...
-      cell.messages.push({
-        type: 'error',
-        message: error.message,
-      })
+      errors.push(
+        schema.codeError({
+          errorMessage: error.message,
+        })
+      )
     }
-    return cell
+
+    if (schema.isA('CodeExpression', node)) {
+      return { ...node, output: outputs[0], errors }
+    } else {
+      return { ...node, outputs, errors }
+    }
+  }
+
+  /**
+   * @override Override of `Listener.stop` to
+   * stop the kernel as well as servers.
+   */
+  public stop(): Promise<void> {
+    log.debug(`Stopping kernel`)
+    if (this.shellSocket !== undefined) {
+      this.shellSocket.removeAllListeners('message')
+      this.shellSocket.close()
+      this.shellSocket = null
+    }
+    if (this.ioSocket !== undefined) {
+      this.ioSocket.removeAllListeners('message')
+      this.ioSocket.close()
+      this.ioSocket = null
+    }
+    if (this.process !== undefined) {
+      this.process.kill()
+      this.process = null
+    }
+    if (this.connectionFile !== undefined) {
+      fs.unlinkSync(this.connectionFile)
+      this.connectionFile = null
+    }
+    this.config = null
+    this.spec = null
+
+    return super.stop()
+  }
+
+  /**
+   * Find Jupyter kernels that are installed on this machine.
+   */
+  private async findKernels(): Promise<Record<string, any>> {
+    if (Object.keys(this.kernels).length === 0) {
+      const kernelSpecs = await kernelspecs.findAll()
+      this.kernels = Object.values(kernelSpecs).reduce(
+        (prev: Record<string, any>, curr: any) => {
+          const language = curr?.spec?.language?.toLowerCase()
+          return typeof language === 'string'
+            ? { ...prev, [language]: curr }
+            : prev
+        },
+        {}
+      )
+    }
+    return this.kernels
+  }
+
+  /**
+   * Start a Jupyter kernel.
+   */
+  private async startKernel(language: string): Promise<void> {
+    const kernelSpecs = await this.findKernels()
+    if (Object.keys(kernelSpecs).length === 0) {
+      throw new Error('No Jupyter kernels available on this machine')
+    }
+    if (!(language in kernelSpecs)) {
+      throw new Error(
+        `Jupyter kernel for language "${language}" not available on this machine`
+      )
+    }
+
+    // Pass `kernels` to `launch()` as an optimization to prevent another kernelspecs
+    // search of the filesystem
+    const kernel = await spawnteract.launch(language, {}, kernelSpecs)
+    this.language = language
+    this.process = kernel.spawn // The running process, from child_process.spawn(...)
+    this.connectionFile = kernel.connectionFile // Connection file path
+    this.config = kernel.config // Connection information from the file
+    this.spec = kernel.kernelSpec
+
+    // Map of requests for handling response messages
+    this.requests = {}
+
+    const { transport, ip, key, shell_port, iopub_port } = this.config
+
+    const origin = `${transport}://${ip}`
+
+    // Shell socket for execute, and other, request
+    this.shellSocket = new jmp.Socket('dealer', 'sha256', key)
+    this.shellSocket.connect(`${origin}:${shell_port}`)
+    this.shellSocket.on('message', this.response.bind(this))
+
+    // IOPub socket for receiving updates
+    this.ioSocket = new jmp.Socket('sub', 'sha256', key)
+    this.ioSocket.connect(`${origin}:${iopub_port}`)
+    this.ioSocket.on('message', this.response.bind(this))
+    this.ioSocket.subscribe('') // Subscribe to all topics
+
+    // Get kernel info mainly to confirm communication with kernel is
+    // working
+    const response: any = await this.request('kernel_info_request', {}, [
+      'kernel_info_reply',
+    ])
+    this.kernelInfo = response.content
+
+    // This wait seems to be necessary in order for messages to be received on
+    // `this._ioSocket`.
+    return new Promise((resolve) => setTimeout(resolve, 1000))
   }
 
   /**
@@ -344,16 +361,17 @@ export class Jupita {
    */
   private request(
     requestType: string,
-    content: Dict,
+    content: Record<string, any>,
     responseTypes = ['execute_result', 'display_data', 'execute_reply', 'error']
   ): Promise<any> {
     return new Promise((resolve, reject) => {
+      const msg_id = crypto.randomBytes(18).toString('hex')
       const request = new jmp.Message()
       request.idents = []
       request.header = {
-        msg_id: uuid(),
+        msg_id,
         username: 'user',
-        session: this.sessionId,
+        session: this.id,
         msg_type: requestType,
         version: '5.2',
       }
@@ -361,17 +379,17 @@ export class Jupita {
       request.metadata = {}
       request.content = content
 
-      this.requests[request.header.msg_id] = {
+      this.requests[msg_id] = {
         request,
         responseTypes,
-        handler: (response: Dict) => resolve(response),
+        handler: resolve,
       }
       this.shellSocket.send(request)
 
       // If this request has not been handled before `timeout` throw an error
       if (this.timeout >= 0) {
         setTimeout(() => {
-          if (this.requests[request.header.msg_id] !== undefined) {
+          if (this.requests[msg_id] !== undefined) {
             reject(new Error('Request timed out'))
           }
         }, this.timeout * 1000)
@@ -384,13 +402,11 @@ export class Jupita {
    *
    * @param  response Response message
    */
-  private response(response: Dict): void {
+  private response(response: Record<string, any>): void {
     const requestId = response.parent_header.msg_id
     const responseType = response.header.msg_type
     const request = this.requests[requestId]
-    if (this.debug) {
-      console.log('Response: ', requestId, responseType, response.content)
-    }
+
     // First response matching the request, including response type
     // calls handler
     if (request?.responseTypes.indexOf(responseType) > -1) {
@@ -405,32 +421,30 @@ export class Jupita {
    * e.g. `{'text/plain': 'Hello'}` to `{type: 'string', data: 'Hello'}`
    *
    * @param  bundle A JMP MIME bundle
-   * @return Promise resolving to a data node
+   * @return A Stencila Schema node
    */
-  private unbundle(bundle: Dict): Dict {
-    const value = (function () {
-      const image = bundle['image/png']
-      if (image !== undefined) {
-        return {
-          type: 'image',
-          src: `data:image/png;base64,${image}`,
-        }
-      }
+  private unbundle(bundle: Record<string, any>): schema.Node {
+    const image = bundle['image/png']
+    if (image !== undefined) {
+      return schema.imageObject({
+        contentUrl: `data:image/png;base64,${image}`,
+      })
+    }
 
-      const text = bundle['text/plain']
-      if (text !== undefined) {
-        // Attempt to parse to JSON
-        try {
-          return JSON.parse(text)
-        } catch (error) {
-          return text
-        }
+    const text = bundle['text/plain']
+    if (text !== undefined) {
+      // Attempt to parse to JSON
+      try {
+        return JSON.parse(text)
+      } catch (error) {
+        return text
       }
-    })()
-    return value
+    }
+
+    return null
   }
 }
 
-function uuid(): string {
-  return crypto.randomBytes(18).toString('hex')
-}
+// istanbul ignore next
+if (require.main === module)
+  cli.main(new Jupita()).catch((error) => log.error(error))

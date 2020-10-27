@@ -1,100 +1,87 @@
 import { Jupita } from '.'
+import { schema } from '@stencila/executa'
 
 jest.setTimeout(60000)
 
-test('JupyterContext', async () => {
-  await Jupita.discover()
-
-  // These tests can only be run if at least one Jupyter kernel is installed
-  console.log(
-    'JupyterContext.spec.kernels: ' +
-      JSON.stringify(Object.keys(Jupita.kernels))
-  )
-  if (Object.keys(Jupita.kernels).length < 1) {
-    return
-  }
-
-  const context = new Jupita({
-    language: 'python',
-    debug: false,
-    timeout: 5,
-  })
-
-  console.log('JupyterContext.kernel: ' + context.kernel)
-
-  await context.initialize()
-  console.log('JupyterContext._config: ' + JSON.stringify(context.config))
-  console.log(
-    'JupyterContext._kernelInfo: ' + JSON.stringify(context.kernelInfo)
-  )
-  expect(context.connectionFile).toBeTruthy()
-  expect(context.process).toBeTruthy()
-
-  let cell
+test('Jupita', async () => {
+  const jupita = new Jupita()
 
   // Execute expression
-  cell = await context.execute({
-    expr: true,
-    source: {
-      type: 'string',
-      data: '2 * 2 - 1',
-    },
-  })
-  expect(cell.messages).toEqual([])
-  expect(cell.outputs[0]).toEqual({
-    value: 3,
-  })
+  let expr = await jupita.execute(
+    schema.codeExpression({
+      text: '2 * 2 - 1',
+      programmingLanguage: 'python',
+    })
+  )
+  expect(expr.errors).toEqual([])
+  expect(expr.output).toEqual(3)
 
   // Execute expression with runtime error
-  cell = await context.execute({
-    expr: true,
-    source: {
-      type: 'string',
-      data: '1 + foo',
-    },
-  })
-  expect(cell.messages).toEqual([
-    { type: 'error', message: "NameError: name 'foo' is not defined" },
+  expr = await jupita.execute(
+    schema.codeExpression({
+      text: '1 + foo',
+      programmingLanguage: 'python',
+    })
+  )
+  expect(expr.errors).toEqual([
+    schema.codeError({ errorMessage: "NameError: name 'foo' is not defined" }),
   ])
 
   // Execute block returning a JSONable console result
-  cell = await context.execute('print(22)\n6 * 7\n')
-  expect(cell.messages).toEqual([])
-  expect(cell.outputs[0]).toEqual({
-    value: 42,
-  })
+  let chunk = await jupita.execute(
+    schema.codeChunk({
+      text: 'print(22)\n6 * 7\n',
+      programmingLanguage: 'python',
+    })
+  )
+  expect(chunk.errors).toEqual([])
+  expect(chunk.outputs).toEqual([42])
 
   // Execute block returning a non-JSONable console result
-  cell = await context.execute(
-    'import datetime\ndatetime.datetime(2018, 5, 23)\n'
+  chunk = await jupita.execute(
+    schema.codeChunk({
+      text: 'import datetime\ndatetime.datetime(2018, 5, 23)\n',
+      programmingLanguage: 'python',
+    })
   )
-  expect(cell.messages).toEqual([])
-  expect(cell.outputs[0]).toEqual({
-    value: 'datetime.datetime(2018, 5, 23, 0, 0)',
-  })
+  expect(chunk.errors).toEqual([])
+  expect(chunk.outputs).toEqual(['datetime.datetime(2018, 5, 23, 0, 0)'])
 
   // Execute block returning an image
-  cell = await context.execute(`
-import matplotlib.pyplot as plt
+  chunk = await jupita.execute(
+    schema.codeChunk({
+      text: `import matplotlib.pyplot as plt
 plt.scatter([1, 2, 3], [1, 2, 3])
-plt.show()
-`)
+plt.show()`,
+      programmingLanguage: 'python',
+    })
+  )
   // Without `%matplotlib inline` magic we get a text rep
   // Fails on Travis, https://travis-ci.org/stencila/node/builds/382500487#L2782, (but not locally on Linux) so skipping for now
-  // assert.ok(cell.outputs[0].value.data.match(/^<matplotlib\.figure\.Figure/))
+  // assert.ok(chunk.outputs[0].value.data.match(/^<matplotlib\.figure\.Figure/))
 
-  cell = await context.execute(`
+  chunk = await jupita.execute(
+    schema.codeChunk({
+      text: `
 %matplotlib inline
 plt.show()
-`)
+`,
+      programmingLanguage: 'python',
+    })
+  )
   // Adding `%matplotlib inline` currently doesn't work as expected
-  // assert.equal(cell.outputs[0].value.type, 'image')
+  // assert.equal(chunk.outputs[0].value.type, 'image')
 
   // Execute block with error
-  cell = await context.execute('foo')
-  expect(cell.messages).toEqual([
-    { type: 'error', message: "NameError: name 'foo' is not defined" },
+  chunk = await jupita.execute(
+    schema.codeChunk({
+      text: 'foo',
+      programmingLanguage: 'python',
+    })
+  )
+  expect(chunk.errors).toEqual([
+    schema.codeError({ errorMessage: "NameError: name 'foo' is not defined" }),
   ])
 
-  context.finalize()
+  await jupita.stop()
 })
