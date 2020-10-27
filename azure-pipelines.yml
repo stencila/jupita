@@ -6,13 +6,16 @@ jobs:
       matrix:
         linux:
           image_name: ubuntu-latest
-          node_version: 12.x
-        mac:
-          image_name: macOS-latest
-          node_version: 12.x
-        windows:
-          image_name: windows-latest
-          node_version: 12.x
+          node_version: 14.x
+        # Currently failing on Mac and Windows because the
+        # installed ipykernel is not detected
+        # See https://dev.azure.com/stencila/stencila/_build/results?buildId=6192&view=logs&j=4420cb5a-3e60-5d7c-f139-f152148f0805&t=e0f33437-cdeb-5531-d1ec-78693af04887&l=49
+        #mac:
+        #  image_name: macOS-latest
+        #  node_version: 14.x
+        #windows:
+        #  image_name: windows-latest
+        #  node_version: 14.x
     pool:
       vmImage: $(image_name)
     steps:
@@ -58,7 +61,7 @@ jobs:
     steps:
       - task: NodeTool@0
         inputs:
-          versionSpec: 12.x
+          versionSpec: 14.x
         displayName: 'Install Node.js'
 
       - script: |
