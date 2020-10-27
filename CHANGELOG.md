@@ -1,3 +1,11 @@
+## [0.1.8](https://github.com/stencila/jupita/compare/v0.1.7...v0.1.8) (2020-10-27)
+
+
+### Bug Fixes
+
+* **dependencies:** update dependency @stencila/executa to ^1.15.0 ([5a77bd9](https://github.com/stencila/jupita/commit/5a77bd9c4e6cee40c1196315b9ef57126e862555))
+* **Deps:** Install Schema and NPM audit fix ([0eb5b3e](https://github.com/stencila/jupita/commit/0eb5b3e0685bbd7dfff4431e1e929f07ecf1f6db))
+
 ## [0.1.7](https://github.com/stencila/jupita/compare/v0.1.6...v0.1.7) (2020-09-13)
 
 
