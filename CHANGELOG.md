@@ -1,3 +1,10 @@
+## [0.1.9](https://github.com/stencila/jupita/compare/v0.1.8...v0.1.9) (2020-10-28)
+
+
+### Bug Fixes
+
+* **Outputs:** Fix capture of multiple execution outputs ([b32cddd](https://github.com/stencila/jupita/commit/b32cddd7e67837745ba783f6c30ff43268d9e1ce))
+
 ## [0.1.8](https://github.com/stencila/jupita/compare/v0.1.7...v0.1.8) (2020-10-27)
 
 
