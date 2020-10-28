@@ -1,11 +1,19 @@
-import { Jupita } from '.'
 import { schema } from '@stencila/executa'
+import { Jupita } from '.'
 
 jest.setTimeout(60000)
 
-test('manifest', async () => {
-  const jupita = new Jupita()
+let jupita: Jupita
 
+beforeEach(() => {
+  jupita = new Jupita()
+})
+
+afterEach(async () => {
+  await jupita.stop()
+})
+
+test('manifest', async () => {
   expect(await jupita.manifest()).toEqual(
     expect.objectContaining({
       capabilities: expect.objectContaining({
@@ -24,12 +32,9 @@ test('manifest', async () => {
       }),
     })
   )
-
-  await jupita.stop()
 })
 
 test('execute', async () => {
-  const jupita = new Jupita()
   let chunk, expr
 
   // Attempt to execute a non existent language
@@ -70,17 +75,23 @@ test('execute', async () => {
   // Execute block returning a JSONable console result
   chunk = await jupita.execute(
     schema.codeChunk({
-      text: 'print(22)\n6 * 7\n',
+      text: `
+print(22)
+6 * 7
+`,
       programmingLanguage: 'python',
     })
   )
   expect(chunk.errors).toEqual([])
-  expect(chunk.outputs).toEqual([42])
+  expect(chunk.outputs).toEqual([22, 42])
 
   // Execute block returning a non-JSONable console result
   chunk = await jupita.execute(
     schema.codeChunk({
-      text: 'import datetime\ndatetime.datetime(2018, 5, 23)\n',
+      text: `
+import datetime
+datetime.datetime(2018, 5, 23)
+`,
       programmingLanguage: 'python',
     })
   )
@@ -90,27 +101,43 @@ test('execute', async () => {
   // Execute block returning an image
   chunk = await jupita.execute(
     schema.codeChunk({
-      text: `import matplotlib.pyplot as plt
-plt.scatter([1, 2, 3], [1, 2, 3])
-plt.show()`,
-      programmingLanguage: 'python',
-    })
-  )
-  // Without `%matplotlib inline` magic we get a text rep
-  // Fails on Travis, https://travis-ci.org/stencila/node/builds/382500487#L2782, (but not locally on Linux) so skipping for now
-  // assert.ok(chunk.outputs[0].value.data.match(/^<matplotlib\.figure\.Figure/))
-
-  chunk = await jupita.execute(
-    schema.codeChunk({
       text: `
-%matplotlib inline
+import matplotlib.pyplot as plt
+plt.plot([1, 2, 3], [1, 2, 3])
 plt.show()
 `,
       programmingLanguage: 'python',
     })
   )
-  // Adding `%matplotlib inline` currently doesn't work as expected
-  // assert.equal(chunk.outputs[0].value.type, 'image')
+  expect(chunk?.outputs?.length).toEqual(1)
+  expect(chunk.outputs).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        type: 'ImageObject',
+        contentUrl: expect.stringMatching(/^data:image\/png;base64,/),
+      }),
+    ])
+  )
+
+  // Execute block returning multiple images
+  chunk = await jupita.execute(
+    schema.codeChunk({
+      text: `
+import matplotlib.pyplot as plt
+plt.plot([1, 2, 3], [1, 2, 3]); plt.show()
+plt.plot([1, 2, 3], [1, 2, 3]); plt.show()
+plt.plot([1, 2, 3], [1, 2, 3]); plt.show()
+`,
+      programmingLanguage: 'python',
+    })
+  )
+  expect(chunk?.outputs?.length).toEqual(3)
+  expect(chunk?.outputs?.[2]).toEqual(
+    expect.objectContaining({
+      type: 'ImageObject',
+      contentUrl: expect.stringMatching(/^data:image\/png;base64,/),
+    })
+  )
 
   // Execute code chunk with error
   chunk = await jupita.execute(
@@ -136,6 +163,4 @@ plt.show()
         'Language of node (haskell) does not match that of kernel (python)',
     }),
   ])
-
-  await jupita.stop()
 })

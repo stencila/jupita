@@ -18,6 +18,9 @@ cover:
 build:
 	npm run build
 
+register:
+	npm run register
+
 docs:
 	npm run docs
 .PHONY: docs
