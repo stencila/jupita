@@ -21,8 +21,10 @@ This package relies on dependencies with native add-ons (`xeromq`). So you will 
 
 ## 🚀 Use
 
-```js
-require('@stencila/jupita').run()
+Register Jupita so that it can be discovered by other executors on your machine,
+
+```bash
+jupita register
 ```
 
 ## 📖 Docs
