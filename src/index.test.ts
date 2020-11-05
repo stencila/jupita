@@ -1,7 +1,7 @@
-import { schema } from '@stencila/executa'
+import { schema, logga } from '@stencila/executa'
 import { Jupita } from '.'
 
-jest.setTimeout(60000)
+jest.setTimeout(5 * 60 * 1000)
 
 let jupita: Jupita
 
@@ -11,6 +11,13 @@ beforeEach(() => {
 
 afterEach(async () => {
   await jupita.stop()
+})
+
+// Replace log handler to record last entry so
+// it can be used in expectations
+let lastLog: any
+logga.replaceHandlers((data) => {
+  lastLog = data
 })
 
 test('manifest', async () => {
@@ -163,4 +170,55 @@ plt.plot([1, 2, 3], [1, 2, 3]); plt.show()
         'Language of node (haskell) does not match that of kernel (python)',
     }),
   ])
+})
+
+describe('unbundle', () => {
+  test('plotly', () => {
+    const image = jupita.unbundle({
+      'application/vnd.plotly.v1+json': {},
+    }) as schema.ImageObject
+    expect(schema.isA('ImageObject', image)).toBe(true)
+    expect(image.content).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          mediaType: 'application/vnd.plotly.v1+json',
+          data: {},
+        }),
+      ])
+    )
+    expect(image.contentUrl).toMatch(`https://via.placeholder.com`)
+  })
+
+  test.each([['image/png'], ['image/jpeg'], ['image/gif']])(
+    '%s',
+    (mediaType) => {
+      const image = jupita.unbundle({
+        [mediaType]: 'data',
+      }) as schema.ImageObject
+      expect(schema.isA('ImageObject', image)).toBe(true)
+      expect(image.contentUrl).toMatch(`data:${mediaType};base64,data`)
+    }
+  )
+
+  test.each([
+    ['42', 42],
+    ['3.14', 3.14],
+    ['[1,2,3]', [1, 2, 3]],
+    ['foo', 'foo'],
+  ])('text: %s', (text, expected) => {
+    expect(jupita.unbundle({ 'text/plain': text })).toEqual(expected)
+  })
+
+  test('text/html', () => {
+    expect(
+      jupita.unbundle({
+        'text/html': '<p></p>',
+      })
+    ).toEqual('')
+    expect(lastLog).toEqual({
+      tag: 'jupita',
+      level: logga.LogLevel.warn,
+      message: 'Unable to decode MIME bundle with keys text/html',
+    })
+  })
 })

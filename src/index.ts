@@ -424,40 +424,62 @@ export class Jupita extends Listener {
    * Convert a "MIME bundle" within a JMP message (e.g. a `execute_result` or
    * `display data` message) into a data node.
    *
-   * This method serves the same function, as `decodeMiieBundle` in Encoda
-   * https://github.com/stencila/encoda/blob/656d26f5387d14f0d3071614cdbf0403eb18be31/src/codecs/ipynb/index.ts#L675.
+   * This method serves the same function, as `decodeMimeBundle` in Encoda
+   * https://github.com/stencila/encoda/blob/656d26f5387d14f0d3071614cdbf0403eb18be31/src/codecs/ipynb/index.ts#L675
+   * but only deals with version 4 of the protocol and handles fewer MIME types.
    *
-   *
+   * Also, it preferentially extracts "richer" media types for the bundle
+   * (e.g. images before plain text representations of images).
    *
    * @param  bundle A JMP MIME bundle
    * @return A Stencila Schema node
    */
-  private unbundle(bundle: Record<string, any>): schema.Node {
-    const png = bundle['image/png']
-    if (png !== undefined) {
+  public unbundle(bundle: Record<string, any>): schema.Node {
+    const plotly = bundle['application/vnd.plotly.v1+json']
+    if (plotly !== undefined) {
+      // A Plotly, interactive image.
+      // A `contentUrl` is required and using an empty string can cause
+      // problems elsewhere. So we use a placeholder which also tells the user
+      // if there were issues rendering the Plotly data.
       return schema.imageObject({
-        contentUrl: `data:image/png;base64,${png}`,
+        content: [
+          { mediaType: 'application/vnd.plotly.v1+json', data: plotly },
+        ],
+        contentUrl:
+          'https://via.placeholder.com/400x60?text=Unable%20to%20render%20Plotly%20output',
       })
     }
 
-    const jpeg = bundle['image/jpeg']
-    if (jpeg !== undefined) {
-      return schema.imageObject({
-        contentUrl: `data:image/jpeg;base64,${jpeg}`,
-      })
+    for (const mediaType of ['image/png', 'image/jpeg', 'image/gif']) {
+      const image = bundle[mediaType]
+      if (image !== undefined) {
+        // A plain, static image
+        return schema.imageObject({
+          contentUrl: `data:${mediaType};base64,${image}`,
+        })
+      }
     }
 
     const text = bundle['text/plain']
     if (text !== undefined) {
-      // Attempt to parse to JSON
+      // Attempt to parse plain text as a number, object etc
+      const content =
+        typeof text === 'string'
+          ? text
+          : Array.isArray(text)
+          ? text.join('')
+          : text.toString()
       try {
-        return JSON.parse(text)
+        return JSON.parse(content)
       } catch (error) {
-        return text
+        return content
       }
     }
 
-    return null
+    log.warn(
+      `Unable to decode MIME bundle with keys ${Object.keys(bundle).join(',')}`
+    )
+    return ''
   }
 }
 
