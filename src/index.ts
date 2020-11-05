@@ -300,7 +300,7 @@ export class Jupita extends Listener {
   private shellRequest(
     type: string,
     content: Record<string, any> = {},
-    timeout: number = 0
+    timeout = 0
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       const id = crypto.randomBytes(18).toString('hex')

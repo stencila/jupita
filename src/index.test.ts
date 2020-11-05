@@ -1,17 +1,14 @@
 import { schema, logga } from '@stencila/executa'
 import { Jupita } from '.'
 
-jest.setTimeout(5 * 60 * 1000)
+jest.setTimeout(1 * 60 * 1000)
 
-let jupita: Jupita
+// To keep runs fast, only have one instance of Jupita, and thus
+// only one Jupyter kernel
+const jupita = new Jupita()
 
-beforeEach(() => {
-  jupita = new Jupita()
-})
-
-afterEach(async () => {
-  await jupita.stop()
-})
+// Ensure that the kernel is cleanly shutdown at the end
+afterAll(async () => await jupita.stop())
 
 // Replace log handler to record last entry so
 // it can be used in expectations
@@ -41,135 +38,217 @@ test('manifest', async () => {
   )
 })
 
-test('execute', async () => {
+describe('execute', () => {
   let chunk, expr
 
-  // Attempt to execute a non existent language
-  chunk = await jupita.execute(
-    schema.codeChunk({
-      text: 'foo',
-      programmingLanguage: 'foo',
-    })
-  )
-  expect(chunk.errors).toEqual([
-    schema.codeError({
-      errorMessage:
-        'Jupyter kernel for language "foo" not available on this machine',
-    }),
-  ])
+  test('basic', async () => {
+    // Execute code expression
+    expr = await jupita.execute(
+      schema.codeExpression({
+        text: '2 * 2 - 1',
+        programmingLanguage: 'python',
+      })
+    )
+    expect(expr.errors).toEqual([])
+    expect(expr.output).toEqual(3)
 
-  // Execute expression
-  expr = await jupita.execute(
-    schema.codeExpression({
-      text: '2 * 2 - 1',
-      programmingLanguage: 'python',
-    })
-  )
-  expect(expr.errors).toEqual([])
-  expect(expr.output).toEqual(3)
+    // Execute code chunk
+    chunk = await jupita.execute(
+      schema.codeChunk({
+        text: '2 * 2 - 1',
+        programmingLanguage: 'python',
+      })
+    )
+    expect(chunk.errors).toEqual([])
+    expect(chunk.outputs).toEqual([3])
 
-  // Execute expression with runtime error
-  expr = await jupita.execute(
-    schema.codeExpression({
-      text: '1 + foo',
-      programmingLanguage: 'python',
-    })
-  )
-  expect(expr.errors).toEqual([
-    schema.codeError({ errorMessage: "NameError: name 'foo' is not defined" }),
-  ])
+    // Attempt to execute a non-executable node
+    const para = schema.paragraph({ content: ['Nothing happens to this'] })
+    expect(await jupita.execute(para)).toEqual(para)
+  })
 
-  // Execute block returning a JSONable console result
-  chunk = await jupita.execute(
-    schema.codeChunk({
-      text: `
-print(22)
-6 * 7
-`,
-      programmingLanguage: 'python',
-    })
-  )
-  expect(chunk.errors).toEqual([])
-  expect(chunk.outputs).toEqual([22, 42])
+  test('text outputs', async () => {
+    // Execute chunk returning JSONable console results
+    chunk = await jupita.execute(
+      schema.codeChunk({
+        text: `6 * 7`,
+        programmingLanguage: 'python',
+      })
+    )
+    expect(chunk.errors).toEqual([])
+    expect(chunk.outputs).toEqual([42])
 
-  // Execute block returning a non-JSONable console result
-  chunk = await jupita.execute(
-    schema.codeChunk({
-      text: `
+    // Execute chunk returning non-JSONable console results
+    chunk = await jupita.execute(
+      schema.codeChunk({
+        text: `
 import datetime
 datetime.datetime(2018, 5, 23)
 `,
-      programmingLanguage: 'python',
-    })
-  )
-  expect(chunk.errors).toEqual([])
-  expect(chunk.outputs).toEqual(['datetime.datetime(2018, 5, 23, 0, 0)'])
+        programmingLanguage: 'python',
+      })
+    )
+    expect(chunk.errors).toEqual([])
+    expect(chunk.outputs).toEqual(['datetime.datetime(2018, 5, 23, 0, 0)'])
+  })
 
-  // Execute block returning an image
-  chunk = await jupita.execute(
-    schema.codeChunk({
-      text: `
+  test('image outputs', async () => {
+    // Execute block returning an image
+    chunk = await jupita.execute(
+      schema.codeChunk({
+        text: `
 import matplotlib.pyplot as plt
 plt.plot([1, 2, 3], [1, 2, 3])
 plt.show()
 `,
-      programmingLanguage: 'python',
-    })
-  )
-  expect(chunk?.outputs?.length).toEqual(1)
-  expect(chunk.outputs).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({
-        type: 'ImageObject',
-        contentUrl: expect.stringMatching(/^data:image\/png;base64,/),
-      }),
-    ])
-  )
+        programmingLanguage: 'python',
+      })
+    )
+    expect(chunk?.outputs?.length).toEqual(1)
+    expect(chunk.outputs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'ImageObject',
+          contentUrl: expect.stringMatching(/^data:image\/png;base64,/),
+        }),
+      ])
+    )
 
-  // Execute block returning multiple images
-  chunk = await jupita.execute(
-    schema.codeChunk({
-      text: `
+    // Execute block returning multiple images
+    chunk = await jupita.execute(
+      schema.codeChunk({
+        text: `
 import matplotlib.pyplot as plt
 plt.plot([1, 2, 3], [1, 2, 3]); plt.show()
 plt.plot([1, 2, 3], [1, 2, 3]); plt.show()
 plt.plot([1, 2, 3], [1, 2, 3]); plt.show()
 `,
-      programmingLanguage: 'python',
-    })
-  )
-  expect(chunk?.outputs?.length).toEqual(3)
-  expect(chunk?.outputs?.[2]).toEqual(
-    expect.objectContaining({
-      type: 'ImageObject',
-      contentUrl: expect.stringMatching(/^data:image\/png;base64,/),
-    })
-  )
+        programmingLanguage: 'python',
+      })
+    )
+    expect(chunk?.outputs?.length).toEqual(3)
+    expect(chunk?.outputs?.[2]).toEqual(
+      expect.objectContaining({
+        type: 'ImageObject',
+        contentUrl: expect.stringMatching(/^data:image\/png;base64,/),
+      })
+    )
+  })
 
-  // Execute code chunk with error
-  chunk = await jupita.execute(
-    schema.codeChunk({
-      text: 'foo',
-      programmingLanguage: 'python',
-    })
-  )
-  expect(chunk.errors).toEqual([
-    schema.codeError({ errorMessage: "NameError: name 'foo' is not defined" }),
-  ])
+  test('stream outputs', async () => {
+    // A stdout output is parsed as JSON if possible
+    chunk = await jupita.execute(
+      schema.codeChunk({
+        text: `print([3.14, 42, {}])`,
+        programmingLanguage: 'python',
+      })
+    )
+    expect(chunk.errors).toEqual([])
+    expect(chunk.outputs).toEqual([[3.14, 42, {}]])
 
-  // Execute code chunk with different language
-  chunk = await jupita.execute(
-    schema.codeChunk({
-      text: '2*2',
-      programmingLanguage: 'haskell',
-    })
-  )
-  expect(chunk.errors).toEqual([
-    schema.codeError({
-      errorMessage:
-        'Language of node (haskell) does not match that of kernel (python)',
-    }),
-  ])
+    // Multiple stdout outputs are merged
+    chunk = await jupita.execute(
+      schema.codeChunk({
+        text: `
+print(1)
+import sys; sys.stdout.write('a')
+print(3)
+`,
+        programmingLanguage: 'python',
+      })
+    )
+    expect(chunk.errors).toEqual([])
+    expect(chunk.outputs).toEqual(['1\na3\n'])
+
+    // Stderr goes to erros
+    chunk = await jupita.execute(
+      schema.codeChunk({
+        text: `
+import sys; sys.stderr.write('An error!')
+`,
+        programmingLanguage: 'python',
+      })
+    )
+    expect(chunk.errors).toEqual([
+      schema.codeError({ errorMessage: 'An error!' }),
+    ])
+    expect(chunk.outputs).toEqual([])
+  })
+
+  test('errors', async () => {
+    // Execute code expression with syntax error
+    expr = await jupita.execute(
+      schema.codeExpression({
+        text: '^%$@%$@^$$&*! @-',
+        programmingLanguage: 'python',
+      })
+    )
+    expect(expr.errors).toEqual([
+      schema.codeError({
+        errorMessage: 'SyntaxError: invalid syntax (<string>, line 1)',
+      }),
+    ])
+
+    // Execute code expression with runtime error
+    expr = await jupita.execute(
+      schema.codeExpression({
+        text: '1 + foo',
+        programmingLanguage: 'python',
+      })
+    )
+    expect(expr.errors).toEqual([
+      schema.codeError({
+        errorMessage: "NameError: name 'foo' is not defined",
+      }),
+    ])
+
+    // Execute code chunk with error
+    chunk = await jupita.execute(
+      schema.codeChunk({
+        text: 'bar = foo',
+        programmingLanguage: 'python',
+      })
+    )
+    expect(chunk.errors).toEqual([
+      schema.codeError({
+        errorMessage: "NameError: name 'foo' is not defined",
+      }),
+    ])
+
+    // Execute code chunk with different language
+    chunk = await jupita.execute(
+      schema.codeChunk({
+        text: '2*2',
+        programmingLanguage: 'haskell',
+      })
+    )
+    expect(chunk.errors).toEqual([
+      schema.codeError({
+        errorMessage:
+          'Language of node (haskell) does not match that of kernel (python)',
+      }),
+    ])
+  })
+
+  test('unknown language', async () => {
+    // Attempt to execute a non existent language
+    // Do this in a new local Jupita instance otherwise get a different
+    // error message about the language not matching that of the kernel
+    const jupita = new Jupita()
+    chunk = await jupita.execute(
+      schema.codeChunk({
+        text: 'foo',
+        programmingLanguage: 'foo',
+      })
+    )
+    expect(chunk.errors).toEqual([
+      schema.codeError({
+        errorMessage:
+          'Jupyter kernel for language "foo" not available on this machine',
+      }),
+    ])
+    await jupita.stop()
+  })
 })
 
 describe('unbundle', () => {
