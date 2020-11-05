@@ -1,3 +1,11 @@
+# [0.2.0](https://github.com/stencila/jupita/compare/v0.1.9...v0.2.0) (2020-11-05)
+
+
+### Features
+
+* **Shell request:** Add timeout option ([67faa1c](https://github.com/stencila/jupita/commit/67faa1cb5a982b162add391df36a9a5ce1a26937))
+* **Unbundling:** Handle Plotly outputs ([796fe9f](https://github.com/stencila/jupita/commit/796fe9f0900b54800c679ce9e7f4a4cadc3df2ea))
+
 ## [0.1.9](https://github.com/stencila/jupita/compare/v0.1.8...v0.1.9) (2020-10-28)
 
 
