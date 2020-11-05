@@ -2,7 +2,6 @@
 
 import {
   Capabilities,
-  Claims,
   cli,
   JSONSchema7,
   Listener,
@@ -295,11 +294,13 @@ export class Jupita extends Listener {
    *
    * @param  type     Type of request e.g. 'execute_request'
    * @param  content  Content of request message
-   * @param  handler  Handler for responses
+   * @param  timeout  Seconds before the request should resolve regardless on whether
+   *                  confirmation messages are received from the kernel.
    */
   private shellRequest(
     type: string,
-    content: Record<string, any> = {}
+    content: Record<string, any> = {},
+    timeout: number = 0
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       const id = crypto.randomBytes(18).toString('hex')
@@ -324,6 +325,11 @@ export class Jupita extends Listener {
       this.requestIdle = false
       this.requestResolve = resolve
       this.shellSocket.send(request)
+
+      if (timeout > 0)
+        setTimeout(() => {
+          this.resolve(true)
+        }, timeout * 1000)
     })
   }
 
@@ -414,8 +420,8 @@ export class Jupita extends Listener {
   /**
    * Resolve a request if a reply has been received and state is idle.
    */
-  private resolve(): void {
-    if (this.requestReply && this.requestIdle) {
+  private resolve(force = false): void {
+    if (force || (this.requestReply && this.requestIdle)) {
       this.requestResolve?.()
     }
   }
