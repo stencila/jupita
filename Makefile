@@ -1,13 +1,13 @@
-all: lint format cover build docs
+all: format lint cover build docs
 
 setup:
 	npm install --python=python2.7
 
-lint:
-	npm run lint
-
 format:
 	npm run format
+
+lint:
+	npm run lint
 
 test:
 	npm test
