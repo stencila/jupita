@@ -9,7 +9,7 @@
 
 ## 👋 Introduction
 
-Stencila [Executa](https://github.com/stencila/executor) defines an API executing nodes within an executable document that is based on JSON-RPC and able to used across multiple transports (e.g. `stdio`, `http`, `ws`). This package acts a bridge between that API and the Jupyter API, which uses it's own [Jupyter Messaging Protocol (JMP)](http://jupyter-client.readthedocs.io/en/stable/messaging.html) and [ZeroMQ](http://zeromq.org/) as a transport. It allows users of Stencila's interfaces to delegate execution to Jupyter kernels, instead of, or in addition to, Stencila's own executors.
+Stencila [Executa](https://github.com/stencila/executa) defines an API executing nodes within an executable document that is based on JSON-RPC and able to used across multiple transports (e.g. `stdio`, `http`, `ws`). This package acts a bridge between that API and the Jupyter API, which uses it's own [Jupyter Messaging Protocol (JMP)](http://jupyter-client.readthedocs.io/en/stable/messaging.html) and [ZeroMQ](http://zeromq.org/) as a transport. It allows users of Stencila's interfaces to delegate execution to Jupyter kernels, instead of, or in addition to, Stencila's own executors.
 
 ## 📦 Install
 
