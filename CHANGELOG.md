@@ -1,3 +1,11 @@
+## [0.2.3](https://github.com/stencila/jupita/compare/v0.2.2...v0.2.3) (2021-02-19)
+
+
+### Bug Fixes
+
+* **Startup:** Increase timeout on startup ([a4b5757](https://github.com/stencila/jupita/commit/a4b57571eb73d64f7abb8e8d168ec3b8d8e86bc1))
+* **Startup:** Wait some time for startup ([641a5b6](https://github.com/stencila/jupita/commit/641a5b6071f5398d6189d9c3c1a11bb8ff8d2824))
+
 ## [0.2.2](https://github.com/stencila/jupita/compare/v0.2.1...v0.2.2) (2020-12-11)
 
 
