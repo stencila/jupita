@@ -17,7 +17,7 @@
     "serve": "ts-node src serve",
     "register": "npm run build && node dist register",
     "build": "tsc --project tsconfig.prod.json",
-    "docs": "typedoc --mode file src/*.ts",
+    "docs": "typedoc src/*.ts",
     "prepack": "npm run build"
   },
   "publishConfig": {

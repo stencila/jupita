@@ -255,17 +255,19 @@ describe('unbundle', () => {
   test('plotly', () => {
     const image = jupita.unbundle({
       'application/vnd.plotly.v1+json': {},
-    }) as schema.ImageObject
+    })
     expect(schema.isA('ImageObject', image)).toBe(true)
-    expect(image.content).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          mediaType: 'application/vnd.plotly.v1+json',
-          data: {},
-        }),
-      ])
-    )
-    expect(image.contentUrl).toMatch(`https://via.placeholder.com`)
+    if (schema.isA('ImageObject', image)) {
+      expect(image.content).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            mediaType: 'application/vnd.plotly.v1+json',
+            data: {},
+          }),
+        ])
+      )
+      expect(image.contentUrl).toMatch(`https://via.placeholder.com`)
+    }
   })
 
   test.each([['image/png'], ['image/jpeg'], ['image/gif']])(
@@ -273,9 +275,11 @@ describe('unbundle', () => {
     (mediaType) => {
       const image = jupita.unbundle({
         [mediaType]: 'data',
-      }) as schema.ImageObject
+      })
       expect(schema.isA('ImageObject', image)).toBe(true)
-      expect(image.contentUrl).toMatch(`data:${mediaType};base64,data`)
+      if (schema.isA('ImageObject', image)) {
+        expect(image.contentUrl).toMatch(`data:${mediaType};base64,data`)
+      }
     }
   )
 
