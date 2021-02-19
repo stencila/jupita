@@ -148,6 +148,8 @@ export class Jupita extends Listener {
         await this.startKernel(language ?? 'python')
       }
 
+      log.info('execute:1')
+
       await this.shellRequest('execute_request', {
         // Source code to be executed by the kernel, one or more lines.
         code: code,
@@ -181,6 +183,7 @@ export class Jupita extends Listener {
         // This allows the queued execution of multiple execute_requests, even if they generate exceptions.
         stop_on_error: false,
       })
+      log.info('execute:2')
     } catch (error) {
       // Some other error happened...
       this.errors.push(
@@ -260,6 +263,8 @@ export class Jupita extends Listener {
       )
     }
 
+    log.info('startKernel:start')
+
     // Pass `kernels` to `launch()` as an optimization to prevent another kernelspecs
     // search of the filesystem
     const kernel = await spawnteract.launch(language, {}, kernelSpecs)
@@ -282,6 +287,12 @@ export class Jupita extends Listener {
     this.ioSocket.connect(`${origin}:${iopub_port}`)
     this.ioSocket.on('message', this.ioResponse.bind(this))
     this.ioSocket.subscribe('') // Subscribe to all topics
+
+    log.info('startKernel:end')
+    // Wait an arbitrary amount of time until for the kernel and
+    // all the messaging to startup. This is an attempt to resolve issues
+    // seen on CI where the first test timed out but subsequent tests passed
+    // await new Promise((resolve, reject) => setTimeout(resolve, 1000))
 
     // Get kernel info mainly to confirm communication with kernel is working
     return this.shellRequest('kernel_info_request')

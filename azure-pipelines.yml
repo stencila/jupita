@@ -39,7 +39,7 @@ jobs:
         condition: eq(variables['agent.os'], 'Linux')
         displayName: 'Linting'
 
-      - script: npm run test:cover -- --testTimeout=300000
+      - script: npm run test:cover -- --testTimeout=60000
         displayName: 'Run tests'
 
       - script: npm run docs
