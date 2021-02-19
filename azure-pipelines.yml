@@ -1,5 +1,3 @@
-# Azure Pipelines config
-
 jobs:
   - job: test
     strategy:
@@ -21,36 +19,36 @@ jobs:
       - task: NodeTool@0
         inputs:
           versionSpec: $(node_version)
-        displayName: 'Install Node.js $(node_version)'
+        displayName: Install Node.js $(node_version)
 
       - script: npm ci
-        displayName: 'Install dependencies'
+        displayName: Install dependencies
 
       - task: UsePythonVersion@0
         inputs:
           versionSpec: '3.7'
 
       - script: pip install ipykernel matplotlib --user
-        displayName: 'Install Python packages used in tests'
+        displayName: Install Python packages used in tests
 
       # Only lint on Linux (unnecessary to duplicate)
       - script: npm run lint
         condition: eq(variables['agent.os'], 'Linux')
-        displayName: 'Linting'
+        displayName: Linting
 
       - script: npm run test:cover -- --testTimeout=60000
-        displayName: 'Run tests'
+        displayName: Run tests
 
       - script: npm run docs
-        displayName: 'Build docs'
+        displayName: Build docs
 
       - script: npm run build
-        displayName: 'Build package'
+        displayName: Build package
 
       # Only upload coverage on Linux (unnecessary to duplicate)
       - script: bash <(curl -s https://codecov.io/bash)
         condition: and(succeeded(), eq(variables['agent.os'], 'Linux'))
-        displayName: 'Upload coverage'
+        displayName: Upload coverage
 
   - job: release
     dependsOn: test
@@ -61,7 +59,7 @@ jobs:
       - task: NodeTool@0
         inputs:
           versionSpec: 14.x
-        displayName: 'Install Node.js'
+        displayName: Install Node.js
 
       - script: |
           npm ci
@@ -76,4 +74,4 @@ jobs:
           GIT_COMMITTER_EMAIL: ci@stenci.la
           GITHUB_TOKEN: $(GITHUB_TOKEN)
           NPM_TOKEN: $(NPM_TOKEN)
-        displayName: 'Deploy docs and package'
+        displayName: Release package and docs
