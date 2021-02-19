@@ -7,15 +7,12 @@ jobs:
         linux:
           image_name: ubuntu-latest
           node_version: 14.x
-        # Currently failing on Mac and Windows because the
-        # installed ipykernel is not detected
-        # See https://dev.azure.com/stencila/stencila/_build/results?buildId=6192&view=logs&j=4420cb5a-3e60-5d7c-f139-f152148f0805&t=e0f33437-cdeb-5531-d1ec-78693af04887&l=49
-        #mac:
-        #  image_name: macOS-latest
-        #  node_version: 14.x
-        #windows:
-        #  image_name: windows-latest
-        #  node_version: 14.x
+        mac:
+          image_name: macOS-latest
+          node_version: 14.x
+        windows:
+          image_name: windows-latest
+          node_version: 14.x
     pool:
       vmImage: $(image_name)
     steps:
@@ -34,7 +31,7 @@ jobs:
       - script: pip install ipykernel matplotlib --user
         displayName: 'Install Python packages used in tests'
 
-      # Only lint on Linux (fails on Windows)
+      # Only lint on Linux (unnecessary to duplicate)
       - script: npm run lint
         condition: eq(variables['agent.os'], 'Linux')
         displayName: 'Linting'
@@ -48,7 +45,7 @@ jobs:
       - script: npm run build
         displayName: 'Build package'
 
-      # Only upload coverage on Linux (unncessary to duplicate)
+      # Only upload coverage on Linux (unnecessary to duplicate)
       - script: bash <(curl -s https://codecov.io/bash)
         condition: and(succeeded(), eq(variables['agent.os'], 'Linux'))
         displayName: 'Upload coverage'
