@@ -7,12 +7,14 @@ jobs:
         linux:
           image_name: ubuntu-latest
           node_version: 14.x
-        mac:
-          image_name: macOS-latest
-          node_version: 14.x
-        windows:
-          image_name: windows-latest
-          node_version: 14.x
+        # Currently failing on Mac and Windows because the
+        # installed ipykernel is not detected
+        # mac:
+        #   image_name: macOS-latest
+        #   node_version: 14.x
+        # windows:
+        #   image_name: windows-latest
+        #   node_version: 14.x
     pool:
       vmImage: $(image_name)
     steps:

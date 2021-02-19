@@ -287,7 +287,7 @@ export class Jupita extends Listener {
     // messaging to startup. This is an attempt to resolve issues
     // seen on CI where the first test timed out but subsequent tests passed
     // and in production occasionally on first code execution.
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await new Promise((resolve) => setTimeout(resolve, 1000))
 
     // Get kernel info mainly to confirm communication with kernel is working
     return this.shellRequest('kernel_info_request')
