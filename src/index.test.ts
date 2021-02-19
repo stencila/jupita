@@ -1,8 +1,6 @@
 import { schema, logga } from '@stencila/executa'
 import { Jupita } from '.'
 
-jest.setTimeout(1 * 60 * 1000)
-
 // To keep runs fast, only have one instance of Jupita, and thus
 // only one Jupyter kernel
 const jupita = new Jupita()
