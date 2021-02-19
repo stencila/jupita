@@ -12,6 +12,7 @@ afterAll(async () => await jupita.stop())
 // it can be used in expectations
 let lastLog: any
 logga.replaceHandlers((data) => {
+  console.info(data)
   lastLog = data
 })
 
