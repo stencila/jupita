@@ -283,6 +283,12 @@ export class Jupita extends Listener {
     this.ioSocket.on('message', this.ioResponse.bind(this))
     this.ioSocket.subscribe('') // Subscribe to all topics
 
+    // Wait an arbitrary amount of time for the kernel and
+    // messaging to startup. This is an attempt to resolve issues
+    // seen on CI where the first test timed out but subsequent tests passed
+    // and in production occasionally on first code execution.
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
     // Get kernel info mainly to confirm communication with kernel is working
     return this.shellRequest('kernel_info_request')
   }
