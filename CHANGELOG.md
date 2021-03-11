@@ -1,3 +1,10 @@
+## [0.2.4](https://github.com/stencila/jupita/compare/v0.2.3...v0.2.4) (2021-03-11)
+
+
+### Bug Fixes
+
+* **Build:** Specify CommonJS; add test that register runs ([4c6761b](https://github.com/stencila/jupita/commit/4c6761b17315318914eb9a203abb8fb93df8f7d4))
+
 ## [0.2.3](https://github.com/stencila/jupita/compare/v0.2.2...v0.2.3) (2021-02-19)
 
 
