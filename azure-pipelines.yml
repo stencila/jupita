@@ -39,16 +39,19 @@ jobs:
       - script: npm run test:cover -- --testTimeout=60000
         displayName: Run tests
 
+      # Only upload coverage on Linux (unnecessary to duplicate)
+      - script: bash <(curl -s https://codecov.io/bash)
+        condition: and(succeeded(), eq(variables['agent.os'], 'Linux'))
+        displayName: Upload coverage
+
       - script: npm run docs
         displayName: Build docs
 
       - script: npm run build
         displayName: Build package
 
-      # Only upload coverage on Linux (unnecessary to duplicate)
-      - script: bash <(curl -s https://codecov.io/bash)
-        condition: and(succeeded(), eq(variables['agent.os'], 'Linux'))
-        displayName: Upload coverage
+      - script: npm run register
+        displayName: Check that register runs
 
   - job: release
     dependsOn: test
