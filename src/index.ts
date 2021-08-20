@@ -117,7 +117,7 @@ export class Jupita extends Listener {
    * For cells with `CodeExpression` nodes utilizes `user_expressions` property of
    * an `execute_request` to evaluate expression side-effect free.
    */
-  public async execute<Type>(node: Type): Promise<Type> {
+  public async execute<Type extends schema.Node>(node: Type): Promise<Type> {
     let language
     let code
     let expressions
@@ -191,8 +191,10 @@ export class Jupita extends Listener {
     }
 
     if (schema.isA('CodeExpression', node)) {
+      // @ts-ignore
       return { ...node, output: this.outputs[0], errors: this.errors }
     } else {
+      // @ts-ignore
       return { ...node, outputs: this.outputs, errors: this.errors }
     }
   }
