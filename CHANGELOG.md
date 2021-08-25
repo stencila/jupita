@@ -1,3 +1,15 @@
+# [0.3.0](https://github.com/stencila/jupita/compare/v0.2.4...v0.3.0) (2021-08-25)
+
+
+### Bug Fixes
+
+* **Build:** Add redux a dependency ([a939675](https://github.com/stencila/jupita/commit/a939675b275db72974c53e8717d49cbc1dd4e07c))
+
+
+### Features
+
+* **Outputs:** Add support for Vega/Vega-Lite outputs ([c69d24f](https://github.com/stencila/jupita/commit/c69d24fa7e03c200097f3df1d27d0dcba4ec47c0))
+
 ## [0.2.4](https://github.com/stencila/jupita/compare/v0.2.3...v0.2.4) (2021-03-11)
 
 
