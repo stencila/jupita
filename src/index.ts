@@ -464,6 +464,27 @@ export class Jupita extends Listener {
       })
     }
 
+    for (const mediaType of [
+      'application/vnd.vega.v1+json',
+      'application/vnd.vega.v2+json',
+      'application/vnd.vega.v3+json',
+      'application/vnd.vega.v4+json',
+      'application/vnd.vega.v5+json',
+      'application/vnd.vegalite.v1+json',
+      'application/vnd.vegalite.v2+json',
+      'application/vnd.vegalite.v3+json',
+      'application/vnd.vegalite.v4+json',
+    ]) {
+      const vega = bundle[mediaType]
+      if (vega !== undefined) {
+        return schema.imageObject({
+          content: [{ mediaType, spec: vega }],
+          contentUrl:
+            'https://via.placeholder.com/400x60?text=Unable%20to%20render%20Vega%20output',
+        })
+      }
+    }
+
     for (const mediaType of ['image/png', 'image/jpeg', 'image/gif']) {
       const image = bundle[mediaType]
       if (image !== undefined) {

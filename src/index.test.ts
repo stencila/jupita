@@ -171,7 +171,9 @@ import sys; sys.stderr.write('An error!')
     expect(chunk.errors).toEqual([
       schema.codeError({ errorMessage: 'An error!' }),
     ])
-    expect(chunk.outputs).toEqual([])
+    expect(chunk.outputs).toEqual([
+      9, // The write() returns the number of bytes written
+    ])
   })
 
   test('errors', async () => {
@@ -262,6 +264,24 @@ describe('unbundle', () => {
           expect.objectContaining({
             mediaType: 'application/vnd.plotly.v1+json',
             data: {},
+          }),
+        ])
+      )
+      expect(image.contentUrl).toMatch(`https://via.placeholder.com`)
+    }
+  })
+
+  test('vega', () => {
+    const image = jupita.unbundle({
+      'application/vnd.vegalite.v4+json': {},
+    })
+    expect(schema.isA('ImageObject', image)).toBe(true)
+    if (schema.isA('ImageObject', image)) {
+      expect(image.content).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            mediaType: 'application/vnd.vegalite.v4+json',
+            spec: {},
           }),
         ])
       )

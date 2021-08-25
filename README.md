@@ -47,6 +47,8 @@ Most development tasks can be run directly from `npm` or via `make` wrapper reci
 | Run tests with coverage        | `npm run cover` | `make cover` |
 | Build documentation            | `npm run docs`  | `make docs`  |
 
+Note that the some of the tests require `python3` and the Python packages `matplotlib` and `Pillow` to be installed.
+
 ## 🙏 Acknowledgments
 
 Many thanks to the nteract community for [`kernelspecs`](https://github.com/nteract/kernelspecs) and
