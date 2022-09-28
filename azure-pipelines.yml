@@ -24,7 +24,7 @@ jobs:
       - script: npm ci
         displayName: Install dependencies
 
-      - task: UsePythonVersion@0
+      - task: UsePythonVersion@0.206.0
         inputs:
           versionSpec: '3.7'
 
