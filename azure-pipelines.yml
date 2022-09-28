@@ -16,7 +16,7 @@ jobs:
     pool:
       vmImage: $(image_name)
     steps:
-      - task: NodeTool@0
+      - task: NodeTool@0.211.0
         inputs:
           versionSpec: $(node_version)
         displayName: Install Node.js $(node_version)
@@ -59,7 +59,7 @@ jobs:
     pool:
       vmImage: ubuntu-latest
     steps:
-      - task: NodeTool@0
+      - task: NodeTool@0.211.0
         inputs:
           versionSpec: 14.x
         displayName: Install Node.js
