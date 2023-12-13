@@ -52,7 +52,7 @@
     "@stencila/executa": "^1.15.4",
     "jmp": "^2.0.0",
     "kernelspecs": "^2.0.0",
-    "redux": "^4.1.1",
+    "redux": "^5.0.0",
     "spawnteract": "^5.0.1"
   },
   "jest": {
